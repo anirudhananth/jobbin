@@ -1,13 +1,18 @@
 const path = require('path');
 const HTMLPlugin = require('html-webpack-plugin');
 const CopyPlugin = require('copy-webpack-plugin');
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const tailwindcss = require('tailwindcss');
 const autoprefixer = require('autoprefixer');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 module.exports = {
   entry: {
-    index: path.resolve('./src/main.tsx'),
+    // index: path.resolve('./src/main.tsx'),
     popup: path.resolve('./src/pages/Popup/index.tsx'),
+    options: path.resolve('./src/pages/Options/index.tsx'),
+    background: path.resolve('./src/pages/Background/background.tsx'),
+    contentScript: path.resolve('./src/pages/Content/content.tsx'),
   },
   mode: 'production',
   module: {
@@ -25,33 +30,48 @@ module.exports = {
         exclude: /node_modules/,
       },
       {
-        test: /\.css$/i,
+        test: /\.(sa|sc|c)ss$/,
         use: [
-          'style-loader',
           {
-            loader: 'css-loader',
+            loader: MiniCssExtractPlugin.loader,
+          },
+          {
+            loader: "css-loader",
             options: {
-              importLoaders: 1,
+              sourceMap: true,
             },
           },
           {
-            loader: 'postcss-loader', // postcss loader needed for tailwindcss
+            loader: "postcss-loader",
             options: {
               postcssOptions: {
-                ident: 'postcss',
-                plugins: [tailwindcss, autoprefixer],
+                plugins: [
+                  require("tailwindcss")("./tailwind.config.js"),
+                  require("autoprefixer"),
+                ],
               },
             },
-          },
-        ],
+          }
+        ]
       },
+      {
+        type: 'assets/resource',
+        use: 'assets/resource',
+        test: /\.(png|svg|jpg|jpeg|gif)$/i,
+      }
     ],
   },
   plugins: [
+    new CleanWebpackPlugin({
+      cleanStaleWebpackAssets: false
+    }),
     new CopyPlugin({
       patterns: [{ from: 'manifest.json', to: '../manifest.json' }],
     }),
-    ...getHtmlPlugins(['index', 'popup']),
+    ...getHtmlPlugins(['popup', 'options']),
+    new MiniCssExtractPlugin({
+      filename: '[name].css',
+    }),
   ],
   resolve: {
     extensions: ['.tsx', '.ts', '.js'],
@@ -60,6 +80,11 @@ module.exports = {
     path: path.join(__dirname, 'dist/js'),
     filename: '[name].js',
   },
+  optimization: {
+    splitChunks: {
+      chunks: 'all',
+    }
+  }
 };
 
 function getHtmlPlugins(chunks) {

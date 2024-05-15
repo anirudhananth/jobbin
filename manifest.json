@@ -6,5 +6,24 @@
   "action": {
     "default_popup": "js/popup.html",
     "default_title": "React Chrome Extension"
-  }
+  },
+  "permissions": [
+    "storage",
+    "tabs",
+    "bookmarks"
+  ],
+  "options_page": "js/options.html",
+  "background": {
+    "service_worker": "js/background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "js/contentScript.js"
+      ]
+    }
+  ]
 }

@@ -1,3 +1,13 @@
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Popup from './pages/Popup/popup';
+
 export default function App() {
-  return <h1 className="text-3xl font-bold underline">Hello world!!</h1>;
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route index element={<Popup />} />
+        <Route path="/popup" element={<Popup />} />
+      </Routes>
+    </BrowserRouter>
+  );
 }

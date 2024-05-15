@@ -1,11 +1,17 @@
 import React from 'react';
+import { useState, useEffect } from 'react';
+import Button from '@mui/material/Button';
+import Job from '../../components/job';
 
-const Popup = () => {
+function Popup() {
   return (
-    <div>
-      <h1 className="text-4xl text-green-500">Hello Popup!</h1>
+    <div className='flex flex-col justify-center m-5 divide-y'>
+      <p className='text-xl'>Add the Job</p>
+      &nbsp;
+      <Job />
     </div>
   );
-};
+}
+
 
 export default Popup;
