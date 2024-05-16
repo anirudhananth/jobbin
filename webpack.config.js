@@ -14,7 +14,6 @@ module.exports = {
     background: path.resolve('./src/pages/Background/background.tsx'),
     contentScript: path.resolve('./src/pages/Content/content.tsx'),
   },
-  mode: 'production',
   module: {
     rules: [
       {

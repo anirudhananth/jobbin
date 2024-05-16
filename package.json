@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "scripts": {
     "dev": "vite",
-    "build": "webpack --config webpack.config.js",
+    "build": "webpack --config webpack.dev.js",
     "watch": "webpack -w --config webpack.config.js",
     "serve": "vite preview",
     "lint:fix": "eslint ./src --ext .jsx,.js,.ts,.tsx --quiet --fix --ignore-path ./.gitignore",
@@ -23,7 +23,8 @@
     "sass": "^1.70.0",
     "sass-loader": "^14.1.0",
     "style-loader": "^3.3.4",
-    "ts-loader": "^9.5.1"
+    "ts-loader": "^9.5.1",
+    "webpack-merge": "^5.10.0"
   },
   "devDependencies": {
     "@types/chrome": "^0.0.259",
