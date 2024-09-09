@@ -10,7 +10,22 @@
   "permissions": [
     "storage",
     "tabs",
-    "bookmarks"
+    "bookmarks",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "*://*.indeed.com/*",
+    "*://*.linkedin.com/*",
+    "*://*.glassdoor.com/*",
+    "*://*.monster.com/*",
+    "*://*.careerbuilder.com/*",
+    "*://*.simplyhired.com/*",
+    "*://*.ziprecruiter.com/*",
+    "*://*.usajobs.gov/*",
+    "*://*.dice.com/*",
+    "*://*.angel.co/*",
+    "https://api.anthropic.com/*",
+    "https://api.openai.com/*"
   ],
   "options_page": "js/options.html",
   "background": {
@@ -19,7 +34,17 @@
   "content_scripts": [
     {
       "matches": [
-        "<all_urls>"
+        "*://*.indeed.com/*",
+        "*://*.linkedin.com/*",
+        "*://*.glassdoor.com/*",
+        "*://*.monster.com/*",
+        "*://*.careerbuilder.com/*",
+        "*://*.simplyhired.com/*",
+        "*://*.ziprecruiter.com/*",
+        "*://*.usajobs.gov/*",
+        "*://*.dice.com/*",
+        "*://*.angel.co/*",
+        "*://*.stripe.com/jobs*"
       ],
       "js": [
         "js/contentScript.js"

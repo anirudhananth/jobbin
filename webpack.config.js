@@ -12,7 +12,7 @@ module.exports = {
     popup: path.resolve('./src/pages/Popup/index.tsx'),
     options: path.resolve('./src/pages/Options/index.tsx'),
     background: path.resolve('./src/pages/Background/background.tsx'),
-    contentScript: path.resolve('./src/pages/Content/content.tsx'),
+    contentScript: path.resolve('./src/pages/Content/index.tsx'),
   },
   module: {
     rules: [
@@ -67,13 +67,19 @@ module.exports = {
     new CopyPlugin({
       patterns: [{ from: 'manifest.json', to: '../manifest.json' }],
     }),
-    ...getHtmlPlugins(['popup', 'options']),
+    ...getHtmlPlugins(['popup', 'options', 'contentScript']),
     new MiniCssExtractPlugin({
       filename: '[name].css',
     }),
   ],
   resolve: {
     extensions: ['.tsx', '.ts', '.js'],
+    fallback: {
+      "path": require.resolve("path-browserify"),
+      "os": require.resolve("os-browserify/browser"),
+      "crypto": require.resolve("crypto-browserify"),
+      "stream": require.resolve("stream-browserify"),
+    }
   },
   output: {
     path: path.join(__dirname, 'dist/js'),
@@ -81,7 +87,9 @@ module.exports = {
   },
   optimization: {
     splitChunks: {
-      chunks: 'all',
+      chunks(chunk) {
+        return chunk.name !== 'contentScript';
+      }
     }
   }
 };
