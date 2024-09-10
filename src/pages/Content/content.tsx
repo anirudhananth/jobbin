@@ -1,11 +1,15 @@
+import { unmountComponentAtNode } from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import JobApplicationData from '../../types';
-
+import AddJob from '../../components/add-job';
+import '../../index.css'
 interface JobApplicationMessage {
-    action: 'jobApplicationDetected' | 'jobDataCollected' | 'parseJobPosting';
+    action: 'jobApplicationDetected' | 'jobDataCollected' | 'parseJobPosting' | 'closeModal';
     data: Partial<JobApplicationData> | null;
 }
 
 let isLoadingContent = false;
+let modalRoot: HTMLDivElement | null = null;
 
 function Content() {
     if (isLoadingContent) {
@@ -28,10 +32,11 @@ function Content() {
     function safeSendMessage(message: JobApplicationMessage): void {
         if (chrome.runtime && chrome.runtime.sendMessage) {
             chrome.runtime.sendMessage(message, (response) => {
+                console.log("Response from background script:", response);
                 if (chrome.runtime.lastError) {
                     console.log("Failed to send message:", chrome.runtime.lastError.message);
                 } else {
-                    console.log("Message sent successfully");
+                    console.log("Message sent successfully: ", response);
                 }
             });
         } else {
@@ -39,7 +44,7 @@ function Content() {
         }
     }
 
-    function extractJobDataFromAnthropic(): Promise<Partial<JobApplicationData>> {
+    function extractJobDataWithAI(): Promise<Partial<JobApplicationData>> {
         const postingText = document.body.innerText;
 
         return new Promise((resolve, reject) => {
@@ -93,8 +98,120 @@ function Content() {
         return '';
     }
 
+    async function addJob(jobData: Partial<JobApplicationData>) {
+        console.log("Adding job:", jobData);
+        const modalRoot = document.createElement('div');
+        modalRoot.id = 'add-job-popup';
+        modalRoot.style.position = 'absolute';
+        modalRoot.style.top = '0';
+        modalRoot.style.left = '0';
+        modalRoot.style.width = '0px';
+        modalRoot.style.height = '0px';
+        modalRoot.style.overflow = 'visible';
+        modalRoot.style.zIndex = '2147483647';
+
+        document.body.appendChild(modalRoot);
+        const shadowRoot = modalRoot.attachShadow({ mode: 'closed' });
+
+        const container = document.createElement('div');
+        container.id = 'react-root';
+
+
+        const tailwindLink = document.createElement('link');
+        tailwindLink.rel = 'stylesheet';
+        tailwindLink.href = chrome.runtime.getURL('tailwind.min.css');
+        const styleElement = document.createElement('style');
+        styleElement.textContent = `
+            :host {
+                all: initial;
+                line-height: 1.5;
+                -webkit-text-size-adjust: 100%;
+                -moz-tab-size: 4;
+                -o-tab-size: 4;
+                tab-size: 4;
+                font-family: Palanquin, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+            }
+            * {
+                font-family: Palanquin, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+                scrollbar-width: thin;
+                scrollbar-color: rgba(203, 213, 225, 1) transparent;
+            }
+            *::-webkit-scrollbar {
+                width: 6px;
+            }
+            *::-webkit-scrollbar-track {
+                background: transparent;
+            }
+            *::-webkit-scrollbar-thumb {
+                background-color: rgba(203, 213, 225, 1);
+                border-radius: 3px;
+                border: 0;
+            }
+
+            #react-root {
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                background-color: rgba(0, 0, 0, 0.5) !important;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+                color: initial !important;
+                font-size: 16px !important;
+                line-height: 1.5 !important;
+            }
+            #react-root * {
+                box-sizing: border-box !important;
+            }
+        `;
+
+        shadowRoot.appendChild(tailwindLink);
+        shadowRoot.appendChild(styleElement);
+        shadowRoot.appendChild(container);
+
+        await new Promise((resolve) => {
+            tailwindLink.onload = resolve;
+        });
+
+        const root = createRoot(container);
+        root.render(
+            <AddJob
+                jobData={jobData}
+                onClose={() => {
+                    root.unmount();
+                    safeSendMessage({
+                        action: "closeModal",
+                        data: null
+                    });
+                    document.body.removeChild(modalRoot);
+                }}
+                onAdd={() => {
+                    safeSendMessage({
+                        action: "jobDataCollected",
+                        data: jobData
+                    });
+                    root.unmount();
+                    document.body.removeChild(modalRoot);
+                }}
+            />
+        );
+    }
+
     async function handlePotentialSubmission(event: Event): Promise<void> {
         if (isProcessing) return;
+        // isProcessing = true;
+        // const jobData = {
+        //     title: 'Software Engineer',
+        //     company: 'Google',
+        //     location: 'Mountain View, CA',
+        //     position: 'Full-time',
+        //     url: window.location.href,
+        //     timestamp: new Date().toISOString(),
+        // }
+        // addJob(jobData);
 
         const target = event.target as HTMLElement;
         const form = target.closest('form');
@@ -108,7 +225,11 @@ function Content() {
             const buttonText = target.textContent?.trim().toLowerCase() || '';
             const buttonValue = (target instanceof HTMLInputElement ? target.value : '').toLowerCase();
 
-            if (buttonText.includes('submit') || buttonValue.includes('submit')) {
+            if (
+                buttonText.includes('submit') ||
+                buttonValue.includes('submit') ||
+                (buttonText.includes('apply') && target instanceof HTMLButtonElement && target.type === 'submit')
+            ) {
 
                 if (isJobApplicationPage()) {
                     isProcessing = true;
@@ -116,26 +237,29 @@ function Content() {
                     event.preventDefault();
 
                     try {
-                        const jobData = await extractJobDataFromAnthropic();
+                        const jobData = await extractJobDataWithAI();
+                        // const jobData = {
+                        //     title: 'Software Engineer',
+                        //     company: 'Google',
+                        //     location: 'Mountain View, CA',
+                        //     position: 'Full-time',
+                        //     url: window.location.href,
+                        //     timestamp: new Date().toISOString(),
+                        // }
                         console.log("Job data extracted:", jobData);
-                        safeSendMessage({
-                            action: "jobApplicationDetected",
-                            data: jobData
-                        });
+                        // safeSendMessage({
+                        //     action: "jobApplicationDetected",
+                        //     data: jobData
+                        // });
+
+                        addJob(jobData);
                     } catch (error) {
                         console.error("Error extracting job data:", error);
                     }
 
                     if (form) processedForms.add(form);
 
-                    setTimeout(() => {
-                        if (target instanceof HTMLInputElement && target.form) {
-                            target.form.submit();
-                        } else if (target instanceof HTMLButtonElement) {
-                            target.click();
-                        }
-                        isProcessing = false;
-                    }, 100);
+                    isProcessing = false;
                 }
             }
         }

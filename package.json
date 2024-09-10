@@ -3,17 +3,20 @@
   "version": "0.0.0",
   "scripts": {
     "dev": "vite",
-    "build": "webpack --config webpack.dev.js",
+    "build": "webpack --config webpack.dev.js && npm run tailwind",
     "watch": "webpack -w --config webpack.config.js",
     "serve": "vite preview",
     "lint:fix": "eslint ./src --ext .jsx,.js,.ts,.tsx --quiet --fix --ignore-path ./.gitignore",
     "lint:format": "prettier  --loglevel warn --write \"./**/*.{js,jsx,ts,tsx,css,md,json}\" ",
     "lint": "npm run lint:format && npm run lint:fix ",
-    "type-check": "tsc"
+    "type-check": "tsc",
+    "build:css": "tailwindcss -i ./src/input.css -o ./dist/tailwind.min.css --minify",
+    "tailwind": "tailwindcss -i ./tailwind.css -o ./dist/tailwind.min.css --watch"
   },
   "dependencies": {
     "@ai-sdk/openai": "^0.0.58",
     "@anthropic-ai/sdk": "^0.27.2",
+    "@clerk/clerk-react": "^5.7.0",
     "@emotion/react": "^11.11.3",
     "@emotion/styled": "^11.11.0",
     "@mui/material": "^5.15.6",

@@ -4,14 +4,23 @@ import { generateText } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
 import { OpenAI } from 'openai';
 
-interface JobApplicationMessage {
-    action: 'jobApplicationDetected';
-    url: string;
-}
-
-interface JobApplication {
+interface JobApplicationData {
+    title: string;
+    company: string;
+    location: string;
+    position: string;
     url: string;
     timestamp: string;
+}
+
+interface JobApplicationRequest {
+    action: 'jobDataCollected' | 'closeModal';
+    data: JobApplicationData | null;
+}
+
+interface JobParsingRequest {
+    action: 'parseJobPosting';
+    postingText: string;
 }
 
 async function getApiKey() {
@@ -32,7 +41,7 @@ async function getAIProvider(provider: string) {
 
 chrome.runtime.onInstalled.addListener(async () => {
     console.log('Extension installed!');
-    chrome.storage.local.set({ jobApplications: [] });
+    chrome.storage.local.set({ jobApplications: [] as JobApplicationData[] });
 });
 
 chrome.runtime.onStartup.addListener(() => {
@@ -90,7 +99,7 @@ async function callAnthropic(prmopt: string): Promise<string> {
 }
 
 async function callOpenAI(prompt: string): Promise<string> {
-    const apiKey = 'KEY';
+    const apiKey = 'API_KEY';
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
@@ -139,10 +148,23 @@ async function parseJobPostingWithAI(postingText: string): Promise<{ title: stri
 
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    if (request.action === 'parseJobPosting') {
+    if ((request as JobParsingRequest).action === 'parseJobPosting') {
         parseJobPostingWithAI(request.postingText)
             .then(sendResponse)
             .catch(error => sendResponse({ error: error.message }));
         return true;
+    } else if ((request as JobApplicationRequest).action === 'closeModal') {
+        console.log('Closing modal');
+        return true;
+    } else if ((request as JobApplicationRequest).action === 'jobDataCollected') {
+        console.log('Job data collected:', request);
+        const job: JobApplicationData = request.data;
+        chrome.storage.local.get(['jobApplications'], (result) => {
+            const jobApplications: JobApplicationData[] = result.data || [];
+            jobApplications.push(job);
+            chrome.storage.local.set({ jobApplications });
+        });
+        return true;
     }
+    return false;
 })
