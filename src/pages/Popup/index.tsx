@@ -2,16 +2,19 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import '../../assets/tailwind.css';
 import Popup from './popup';
+import "../../index.css";
 
-function init() {
+async function init() {
+
   const root = document.createElement('div');
-  root.className = 'container';
+  // root.className = 'container';
+  document.body.className = 'container';
   document.body.appendChild(root);
   const rootDiv = ReactDOM.createRoot(root);
   rootDiv.render(
-    <React.StrictMode>
-      <Popup />
-    </React.StrictMode>,
+    // <React.StrictMode>
+    <Popup />
+    // </React.StrictMode>,
   );
 }
 

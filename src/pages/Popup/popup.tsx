@@ -1,35 +1,99 @@
-import React from 'react';
-import { useState, useEffect } from 'react';
-import Button from '@mui/material/Button';
-import Job from '../../components/job';
-import AddJob from '../../components/add-job';
+import Job from "../../components/job";
+import { createClient, User } from "@supabase/supabase-js";
+import Auth from "../../components/auth";
+import "../../index.css";
+import { useState, useEffect } from "react";
+import React from "react";
+
+const supabaseUrl = 'https://ykcecftnsyyclchogssh.supabase.co';
 
 function Popup() {
-  const jobData = {
-    title: 'Software Engineer',
-    company: 'Google',
-    location: 'Mountain View, CA',
-    position: 'Full-time',
-    url: window.location.href,
-    timestamp: new Date().toISOString(),
-  }
-  console.log("Hi")
-  return (
-    <div className='flex flex-col justify-center m-5 divide-y'>
-      <p className='text-xl'>Add the Job</p>
-      &nbsp;
-      {/* <Job /> */}
-      <AddJob
-        jobData={jobData}
-        onClose={() => {
-        }}
-        onAdd={() => {
-        }}
-      />
+  const [isSignedIn, setIsSignedIn] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [supabase, setSupabase] = useState<any>(null);
 
+  useEffect(() => {
+    chrome.storage.local.get(['supabaseKey', 'user'], (result) => {
+      const supabaseKey = result.supabaseKey;
+      console.log("hi")
+      const supabaseClient = createClient(supabaseUrl, supabaseKey);
+      setSupabase(supabaseClient);
+
+      if (result.user) {
+        setUser(result.user);
+        setIsSignedIn(true);
+      }
+    })
+  }, []);
+
+  async function signUp(email: string, password: string) {
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: 'https://eeikkhebkpoeajjjdhnnnhpgdnepgghc.chromiumapp.org/',
+        }
+      })
+
+      if (error) {
+        console.error('Error signing in:', error);
+      } else {
+        console.log('Signed in successfully:', data);
+        setUser(data.user);
+        setIsSignedIn(true);
+        chrome.storage.local.set({ user: data.user });
+        // Handle successful sign-in (e.g., update UI, store session)
+      }
+    } catch (error) {
+      console.error('Error during Supabase sign-in:', error);
+    }
+  }
+
+  async function login(email: string, password: string) {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+
+      if (error) {
+        console.error('Error signing in:', error);
+      } else {
+        console.log('Signed in successfully:', data);
+        setUser(data.user);
+        setIsSignedIn(true);
+        // Handle successful sign-in (e.g., update UI, store session)
+      }
+    } catch (error) {
+      console.error('Error during Supabase sign-in:', error);
+    }
+  }
+
+  function signOut() {
+    supabase.auth.signOut().then(() => {
+      setUser(null);
+      setIsSignedIn(false);
+      chrome.storage.local.remove('user');
+    })
+  }
+
+  return (
+    <div className="">
+      {/* <Job /> */}
+      {!isSignedIn ? (
+        <Auth
+          signUp={(email, password) => signUp(email, password)}
+          login={(email, password) => login(email, password)}
+        />
+      ) : (
+        <div>
+          <p>Welcome, {user?.email}</p>
+          <button onClick={signOut}>Sign Out</button>
+        </div>
+      )}
     </div>
   );
 }
 
-
-export default Popup;
+export default React.memo(Popup);
