@@ -101,6 +101,7 @@ function Content() {
 
     chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         if (request.action === "openAddJobModal") {
+            console.log("Opening add job modal with data:", request.data);
             addJob(request.data);
         }
     });

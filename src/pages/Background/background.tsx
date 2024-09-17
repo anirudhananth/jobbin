@@ -12,7 +12,7 @@ interface JobApplicationData {
     position: string;
     url: string;
     timestamp: string;
-    userId: string;
+    // user_id: string;
 }
 
 interface JobApplicationRequest {
@@ -25,21 +25,30 @@ interface JobParsingRequest {
     postingText: string;
 }
 
-let supabase: any = null;
-const supabaseUrl = 'https://ykcecftrsyclchogssh.supabase.co';
+// let supabase: any = null;
+const supabaseUrl = 'https://ykcecftnsyyclchogssh.supabase.co';
 // const clerk = new ClerkProvider({});
 
-async function getApiKey() {
+async function getOpenAIApiKey() {
     return new Promise<string>((resolve) => {
-        chrome.storage.sync.get(['openaiApiKey'], (result) => {
+        chrome.storage.local.get(['openaiApiKey'], (result) => {
             resolve(result.openaiApiKey || '');
+        });
+    });
+}
+
+async function getSupabaseApiKey() {
+    return new Promise<string>((resolve) => {
+        chrome.storage.local.get(['supabaseKey'], (result) => {
+            console.log(result);
+            resolve(result.supabaseKey || '');
         });
     });
 }
 
 async function getAIProvider(provider: string) {
     return new Promise<OpenAI>((resolve) => {
-        chrome.storage.sync.get(['openai'], (result) => {
+        chrome.storage.local.get(['openai'], (result) => {
             resolve(result.openaiApiKey || '');
         });
     });
@@ -49,31 +58,24 @@ chrome.runtime.onInstalled.addListener(async () => {
     console.log('Extension installed!');
     // chrome.storage.local.set({ jobApplications: [] as JobApplicationData[] });
     chrome.storage.local.set({
-        supabaseKey: 'KEY',
-    }, () => {
-        initSupabase();
-    })
-});
+        supabaseKey: 'KEY'
+    });
 
-function initSupabase() {
-    chrome.storage.local.get(['supabaseKey'], (result) => {
-        if (result.supabaseKey && !supabase) {
-            supabase = createClient(supabaseUrl, result.supabaseKey);
-            console.log("Supabase initialized");
-        }
-    })
-}
+    // addJobApplication({
+    //     title: 'Software Engineer',
+    //     company: 'Google',
+    //     location: 'Mountain View, CA',
+    //     position: 'Full-time',
+    //     url: 'https://google.com',
+    //     timestamp: new Date().toISOString()
+    // });
+});
 
 chrome.runtime.onStartup.addListener(() => {
     console.log('Extension started');
-    // initializeStorage();
 });
 
 async function addJobApplication(job: JobApplicationData) {
-    if (!supabase) {
-        console.error("Supabase not initialized");
-        return;
-    }
     const { user } = await chrome.storage.local.get(['user']);
     if (!user) {
         console.error("User not found in storage");
@@ -81,14 +83,23 @@ async function addJobApplication(job: JobApplicationData) {
     }
 
     try {
-        const { data, error } = await supabase
-            .from('jobApplications')
-            .insert({ ...job, user_id: user.id });
+        const supabaseKey = await getSupabaseApiKey();
+        console.log(supabaseKey);
+        const response = await fetch(`${supabaseUrl}/rest/v1/job_applications`, {
+            method: 'POST',
+            headers: {
+                'apikey': supabaseKey,
+                // 'Authorization': `Bearer ${supabaseKey}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ ...job, user_id: user.id })
+        });
 
-        if (error) {
-            console.error("Error adding job applications:", error);
+        if (!response.ok) {
+            console.log("Error adding job application:", response);
+            throw new Error(`HTTP error! status: ${response.status}`);
         } else {
-            console.log("Job application added successfully:", data);
+            console.log("Job application added successfully!");
         }
     } catch (error) {
         console.error("Error during Supabase insert:", error);
@@ -96,10 +107,6 @@ async function addJobApplication(job: JobApplicationData) {
 }
 
 async function getJobApplications() {
-    if (!supabase) {
-        console.error("Supabase not initialized");
-        return [];
-    }
     const { user } = await chrome.storage.local.get(['user']);
     if (!user) {
         console.error("User not found in storage.");
@@ -107,18 +114,22 @@ async function getJobApplications() {
     }
 
     try {
-        const { data, error } = await supabase
-            .from('jobApplications')
-            .select("*")
-            .eq('user_id', user.id);
+        const supabaseKey = await getSupabaseApiKey();
+        const response = await fetch(`${supabaseUrl}/rest/v1/jobApplications?user_id=eq.${user.id}`, {
+            method: 'GET',
+            headers: {
+                'apikey': supabaseKey,
+                'Authorization': `Bearer ${supabaseKey}`
+            }
+        });
 
-        if (error) {
-            console.error("Error fetching job applications:", error);
-            return [];
-        } else {
-            console.log("Job applications fetched successfully:", data);
-            return data;
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
+
+        const data = await response.json();
+        console.log("Job applications fetched successfully:", data);
+        return data;
     } catch (error) {
         console.error("Error during Supabase select:", error);
         return [];
@@ -240,6 +251,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             jobApplications.push(job);
             chrome.storage.local.set({ jobApplications });
         });
+        addJobApplication(job);
         return true;
     } else if (request.action === 'getJobApplications') {
         getJobApplications()

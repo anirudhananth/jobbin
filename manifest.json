@@ -28,14 +28,15 @@
     "*://*.dice.com/*",
     "*://*.angel.co/*",
     "https://api.anthropic.com/*",
-    "https://api.openai.com/*"
+    "https://api.openai.com/*",
+    "https://*.supabase.co/*"
   ],
   "options_page": "js/options.html",
   "background": {
     "service_worker": "js/background.js"
   },
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'"
+    "extension_pages": "script-src 'self'; object-src 'self';"
   },
   "content_scripts": [
     {

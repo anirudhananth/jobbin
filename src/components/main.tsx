@@ -1,8 +1,10 @@
 import { useState } from "react";
 import AddJob from "./add-job"
 import JobApplicationData from "../types";
+import { User } from "@supabase/supabase-js";
 
 export default function Main() {
+    const [user, setUser] = useState<any>(null);
     const [jobData, setJobData] = useState<JobApplicationData>({
         url: window.location.href,
         timestamp: new Date().toISOString(),
@@ -11,6 +13,13 @@ export default function Main() {
         location: '',
         position: '',
     });
+
+    const initUser = async () => {
+        const { user } = await chrome.storage.local.get(['user']);
+        setUser(user);
+    }
+
+    initUser();
 
     const handleAddApplication = () => {
         chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
@@ -22,7 +31,7 @@ export default function Main() {
         <>
             <div className="p-2 bg-white text-gray-900">
                 <div className="grid grid-cols-1 px-4 overflow-hidden sm:justify-center flex-wrap bg-gray-50 dark:bg-gray-50">
-                    <a rel="noopener noreferrer" href="#" className={`cursor-default text-center text-lg font-bold flex-shrink-0 px-5 py-2 border-b-4 border-violet-600 text-gray-900`}>Welcome!</a>
+                    <a rel="noopener noreferrer" href="#" className={`cursor-default text-center text-lg font-bold flex-shrink-0 px-5 py-2 border-b-4 border-violet-600 text-gray-900`}>Welcome${user ? ", " + user.firstName : ""}!</a>
                 </div>
                 <div className="pt-4 bg-gray-100 dark:bg-gray-100">
                     <div className={`col-span-full sm:col-span-3 w-64 mx-auto`}>

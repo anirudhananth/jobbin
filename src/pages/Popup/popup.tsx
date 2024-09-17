@@ -9,7 +9,7 @@ import Main from "../../components/main";
 const supabaseUrl = 'https://ykcecftnsyyclchogssh.supabase.co';
 
 function Popup() {
-  const [isSignedIn, setIsSignedIn] = useState(true);
+  const [isSignedIn, setIsSignedIn] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [supabase, setSupabase] = useState<any>(null);
 
@@ -27,7 +27,7 @@ function Popup() {
     })
   }, []);
 
-  async function signUp(email: string, password: string) {
+  async function signUp(firstName: string, lastName: string, email: string, password: string) {
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -41,9 +41,24 @@ function Popup() {
         console.error('Error signing in:', error);
       } else {
         console.log('Signed in successfully:', data);
+        await supabase.from('users').insert({
+          id: data.user?.id,
+          first_name: firstName,
+          last_name: lastName,
+          email,
+        }).catch((error: Error) => {
+          console.error('Error inserting user:', error);
+          return;
+        });
         setUser(data.user);
         setIsSignedIn(true);
-        chrome.storage.local.set({ user: data.user });
+        chrome.storage.local.set({
+          user: {
+            ...data.user,
+            firstName,
+            lastName
+          }
+        });
         // Handle successful sign-in (e.g., update UI, store session)
       }
     } catch (error) {
@@ -62,8 +77,25 @@ function Popup() {
         console.error('Error signing in:', error);
       } else {
         console.log('Signed in successfully:', data);
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', data.user?.id)
+          .single();
+
+        if (userError) {
+          console.error('Error fetching user:', userError);
+          return;
+        }
         setUser(data.user);
         setIsSignedIn(true);
+        chrome.storage.local.set({
+          user: {
+            ...data.user,
+            firstName: userData.first_name,
+            lastName: userData.last_name
+          }
+        });
         // Handle successful sign-in (e.g., update UI, store session)
       }
     } catch (error) {
@@ -84,7 +116,7 @@ function Popup() {
       {/* <Job /> */}
       {!isSignedIn ? (
         <Auth
-          signUp={(email, password) => signUp(email, password)}
+          signUp={(firstName, lastName, email, password) => signUp(firstName, lastName, email, password)}
           login={(email, password) => login(email, password)}
         />
       ) : (

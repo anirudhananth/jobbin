@@ -1,7 +1,9 @@
 import { FormEvent, useState } from "react"
 
-export default function Auth({ signUp, login }: { signUp: (email: string, password: string) => void, login: (email: string, password: string) => void }) {
+export default function Auth({ signUp, login }: { signUp: (firstName: string, lastName: string, email: string, password: string) => void, login: (email: string, password: string) => void }) {
     const [isSignUp, setIsSignUp] = useState(false)
+    const [firstName, setFirstName] = useState("")
+    const [lastName, setLastName] = useState("")
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
     const [confirmPassword, setConfirmPassword] = useState("")
@@ -16,7 +18,7 @@ export default function Auth({ signUp, login }: { signUp: (email: string, passwo
                 return
             }
             setIsWrongPassword(false)
-            signUp(email, password)
+            signUp(firstName, lastName, email, password)
         } else {
             login(email, password)
         }
@@ -35,6 +37,18 @@ export default function Auth({ signUp, login }: { signUp: (email: string, passwo
                             <p className="text-2xl text-gray-800 font-semibold">{isSignUp ? "Create a new account!" : "Login to your account!"}</p>
                         </div>
                         <div className="grid grid-cols-1 gap-4 col-span-full lg:col-span-3" >
+                            {isSignUp && (
+                                <>
+                                    <div className={`col-span-full sm:col-span-3 w-64 mx-auto`}>
+                                        <label htmlFor="FirstName" className={`text-sm italic px-1 font-bold text-violet-500 dark:text-violet-500`}>First Name</label>
+                                        <input id="firstName" type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="John" className={`!w-full h-10 px-2 rounded-md focus:ring focus:ring-opacity-75 text-gray-600 focus:ring-violet-600 border-gray-300 dark:text-gray-600 dark:focus:ring-violet-600 dark:border-gray-300`} required />
+                                    </div>
+                                    <div className={`col-span-full sm:col-span-3 w-64 mx-auto`}>
+                                        <label htmlFor="LastName" className={`text-sm italic px-1 font-bold text-violet-500 dark:text-violet-500`}>Last Name</label>
+                                        <input id="lastName" type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Doe" className={`!w-full h-10 px-2 rounded-md focus:ring focus:ring-opacity-75 text-gray-600 focus:ring-violet-600 border-gray-300 dark:text-gray-600 dark:focus:ring-violet-600 dark:border-gray-300`} required />
+                                    </div>
+                                </>
+                            )}
                             <div className={`col-span-full sm:col-span-3 w-64 mx-auto`}>
                                 <label htmlFor="Email" className={`text-sm italic px-1 font-bold text-violet-500 dark:text-violet-500`}>Email</label>
                                 <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="xyz@gmail.com" className={`!w-full h-10 px-2 rounded-md focus:ring focus:ring-opacity-75 text-gray-600 focus:ring-violet-600 border-gray-300 dark:text-gray-600 dark:focus:ring-violet-600 dark:border-gray-300`} required />
