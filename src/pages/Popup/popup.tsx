@@ -4,11 +4,12 @@ import Auth from "../../components/auth";
 import "../../index.css";
 import { useState, useEffect } from "react";
 import React from "react";
+import Main from "../../components/main";
 
 const supabaseUrl = 'https://ykcecftnsyyclchogssh.supabase.co';
 
 function Popup() {
-  const [isSignedIn, setIsSignedIn] = useState(false);
+  const [isSignedIn, setIsSignedIn] = useState(true);
   const [user, setUser] = useState<User | null>(null);
   const [supabase, setSupabase] = useState<any>(null);
 
@@ -87,10 +88,7 @@ function Popup() {
           login={(email, password) => login(email, password)}
         />
       ) : (
-        <div>
-          <p>Welcome, {user?.email}</p>
-          <button onClick={signOut}>Sign Out</button>
-        </div>
+        <Main />
       )}
     </div>
   );

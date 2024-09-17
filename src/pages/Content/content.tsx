@@ -12,6 +12,7 @@ let isLoadingContent = false;
 let modalRoot: HTMLDivElement | null = null;
 
 function Content() {
+    console.log("Job application detection script loaded");
     if (isLoadingContent) {
         return null;
     }
@@ -98,6 +99,12 @@ function Content() {
         return '';
     }
 
+    chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+        if (request.action === "openAddJobModal") {
+            addJob(request.data);
+        }
+    });
+
     async function addJob(jobData: Partial<JobApplicationData>) {
         console.log("Adding job:", jobData);
         const modalRoot = document.createElement('div');
@@ -157,7 +164,7 @@ function Content() {
                 display: flex !important;
                 align-items: center !important;
                 justify-content: center !important;
-                background-color: rgba(0, 0, 0, 0.5) !important;
+                background-color: transparent !important;
                 font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
                 color: initial !important;
                 font-size: 16px !important;
@@ -182,16 +189,12 @@ function Content() {
                 jobData={jobData}
                 onClose={() => {
                     root.unmount();
-                    safeSendMessage({
-                        action: "closeModal",
-                        data: null
-                    });
                     document.body.removeChild(modalRoot);
                 }}
-                onAdd={() => {
+                onAdd={(updatedJobData: JobApplicationData) => {
                     safeSendMessage({
                         action: "jobDataCollected",
-                        data: jobData
+                        data: updatedJobData
                     });
                     root.unmount();
                     document.body.removeChild(modalRoot);

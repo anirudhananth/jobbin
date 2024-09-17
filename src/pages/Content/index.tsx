@@ -13,9 +13,9 @@ function init() {
     const rootDiv = ReactDom.createRoot(root);
     console.log(rootDiv);
     rootDiv.render(
-        <React.StrictMode>
-            <ContentScript />
-        </React.StrictMode>
+        // <React.StrictMode>
+        <ContentScript />
+        // </React.StrictMode>
     );
 }
 
