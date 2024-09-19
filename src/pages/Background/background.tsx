@@ -16,7 +16,7 @@ interface JobApplicationData {
 }
 
 interface JobApplicationRequest {
-    action: 'jobDataCollected' | 'closeModal';
+    action: 'jobDataCollected' | 'closeModal' | 'getJobApplications';
     data: JobApplicationData | null;
 }
 
@@ -46,10 +46,10 @@ async function getSupabaseApiKey() {
     });
 }
 
-async function getAIProvider(provider: string) {
-    return new Promise<OpenAI>((resolve) => {
-        chrome.storage.local.get(['openai'], (result) => {
-            resolve(result.openaiApiKey || '');
+async function getAnthropicApiKey() {
+    return new Promise<string>((resolve) => {
+        chrome.storage.local.get(['anthropicApiKey'], (result) => {
+            resolve(result.anthropicApiKey || '');
         });
     });
 }
@@ -57,6 +57,7 @@ async function getAIProvider(provider: string) {
 chrome.runtime.onInstalled.addListener(async () => {
     console.log('Extension installed!');
     // chrome.storage.local.set({ jobApplications: [] as JobApplicationData[] });
+    chrome.storage.local.set({ disabled: false });
     chrome.storage.local.set({
         supabaseKey: 'KEY'
     });
@@ -89,7 +90,6 @@ async function addJobApplication(job: JobApplicationData) {
             method: 'POST',
             headers: {
                 'apikey': supabaseKey,
-                // 'Authorization': `Bearer ${supabaseKey}`,
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({ ...job, user_id: user.id })
@@ -106,7 +106,7 @@ async function addJobApplication(job: JobApplicationData) {
     }
 }
 
-async function getJobApplications() {
+async function getJobApplications(): Promise<JobApplicationData[]> {
     const { user } = await chrome.storage.local.get(['user']);
     if (!user) {
         console.error("User not found in storage.");
@@ -115,7 +115,7 @@ async function getJobApplications() {
 
     try {
         const supabaseKey = await getSupabaseApiKey();
-        const response = await fetch(`${supabaseUrl}/rest/v1/jobApplications?user_id=eq.${user.id}`, {
+        const response = await fetch(`${supabaseUrl}/rest/v1/job_applications?user_id=eq.${user.id}`, {
             method: 'GET',
             headers: {
                 'apikey': supabaseKey,
@@ -155,8 +155,8 @@ function isValidJobPostingResponse(response: any): response is { title: string, 
         typeof response.position === 'string';
 }
 
-async function callAnthropic(prmopt: string): Promise<string> {
-    const apiKey = 'KEY';
+async function callAnthropic(prompt: string): Promise<string> {
+    const apiKey = await getAnthropicApiKey();
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
@@ -186,7 +186,7 @@ async function callAnthropic(prmopt: string): Promise<string> {
 }
 
 async function callOpenAI(prompt: string): Promise<string> {
-    const apiKey = 'API_KEY';
+    const apiKey = await getOpenAIApiKey();
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
@@ -222,8 +222,15 @@ async function parseJobPostingWithAI(postingText: string): Promise<{ title: stri
     `;
 
     try {
-        const response = await callOpenAI(prompt);
-        console.log("OPENAI RESPONSE: ", response);
+        const result: { [key: string]: string } = await chrome.storage.local.get(['apiProvider']);
+        let response = null;
+        if (result.apiProvider === 'openai') {
+            response = await callOpenAI(prompt);
+            console.log("OPENAI RESPONSE: ", response);
+        } else {
+            response = await callAnthropic(prompt);
+            console.log("ANTHROPIC RESPONSE: ", response);
+        }
         const parsedResponse = parseClaudeResponse(response);
         console.log('Parsed response:', parsedResponse);
         return parsedResponse;
@@ -234,7 +241,7 @@ async function parseJobPostingWithAI(postingText: string): Promise<{ title: stri
 }
 
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
     if ((request as JobParsingRequest).action === 'parseJobPosting') {
         parseJobPostingWithAI(request.postingText)
             .then(sendResponse)
@@ -247,16 +254,28 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         console.log('Job data collected:', request);
         const job: JobApplicationData = request.data;
         chrome.storage.local.get(['jobApplications'], (result) => {
-            const jobApplications: JobApplicationData[] = result.data || [];
+            const jobApplications: JobApplicationData[] = result.jobApplications || [];
             jobApplications.push(job);
             chrome.storage.local.set({ jobApplications });
         });
         addJobApplication(job);
         return true;
     } else if (request.action === 'getJobApplications') {
-        getJobApplications()
-            .then(sendResponse)
-            .catch(error => sendResponse({ error: error.message }));
+        const fetchApplications = async () => {
+            try {
+                const applications = await getJobApplications();
+                console.log("Fetched applications in background:", applications);
+                chrome.storage.local.set({ jobApplications: applications });
+                sendResponse(applications);
+                // return true;
+            } catch (error: any) {
+                console.error("Error in getJobApplications:", error);
+                sendResponse({ error: error.message });
+                return false;
+            }
+        };
+
+        fetchApplications();
         return true;
     }
     return false;

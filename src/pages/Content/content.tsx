@@ -3,8 +3,14 @@ import { createRoot } from 'react-dom/client';
 import JobApplicationData from '../../types';
 import AddJob from '../../components/add-job';
 import '../../index.css'
+import ViewApplications from '../../components/view-applications';
+
+window.addEventListener('load', () => {
+    chrome.storage.local.set({ disabled: false });
+})
+
 interface JobApplicationMessage {
-    action: 'jobApplicationDetected' | 'jobDataCollected' | 'parseJobPosting' | 'closeModal';
+    action: 'jobApplicationDetected' | 'jobDataCollected' | 'parseJobPosting' | 'closeModal' | 'enableButton';
     data: Partial<JobApplicationData> | null;
 }
 
@@ -103,7 +109,16 @@ function Content() {
         if (request.action === "openAddJobModal") {
             console.log("Opening add job modal with data:", request.data);
             addJob(request.data);
+            sendResponse({ success: true, message: "Add job modal opened" });
+        } else if (request.action === "openViewApplicationsModal") {
+            console.log("Opening view applications modal with data:", request.data);
+            viewApplications(request.data);
+            sendResponse({ success: true, message: "View applications modal opened" });
+        } else {
+            console.log("Unknown action received:", request.action);
+            sendResponse({ success: false, message: "Unknown action" });
         }
+        return true;
     });
 
     async function addJob(jobData: Partial<JobApplicationData>) {
@@ -185,12 +200,15 @@ function Content() {
         });
 
         const root = createRoot(container);
+        document.body.style.overflow = 'hidden';
         root.render(
             <AddJob
                 jobData={jobData}
                 onClose={() => {
                     root.unmount();
+                    document.body.style.overflow = 'auto';
                     document.body.removeChild(modalRoot);
+                    chrome.storage.local.set({ disabled: false });
                 }}
                 onAdd={(updatedJobData: JobApplicationData) => {
                     safeSendMessage({
@@ -198,7 +216,101 @@ function Content() {
                         data: updatedJobData
                     });
                     root.unmount();
+                    document.body.style.overflow = 'auto';
                     document.body.removeChild(modalRoot);
+                    chrome.storage.local.set({ disabled: false });
+                }}
+            />
+        );
+    }
+
+    async function viewApplications(applications: JobApplicationData[]) {
+        console.log("Viewing applications:", applications);
+        const modalRoot = document.createElement('div');
+        modalRoot.id = 'view-applications-popup';
+        modalRoot.style.position = 'absolute';
+        modalRoot.style.top = '0';
+        modalRoot.style.left = '0';
+        modalRoot.style.width = '0px';
+        modalRoot.style.height = '0px';
+        modalRoot.style.overflow = 'visible';
+        modalRoot.style.zIndex = '2147483647';
+
+        document.body.appendChild(modalRoot);
+        const shadowRoot = modalRoot.attachShadow({ mode: 'closed' });
+
+        const container = document.createElement('div');
+        container.id = 'react-root';
+
+        const tailwindLink = document.createElement('link');
+        tailwindLink.rel = 'stylesheet';
+        tailwindLink.href = chrome.runtime.getURL('tailwind.min.css');
+        const styleElement = document.createElement('style');
+        styleElement.textContent = `
+            :host {
+                all: initial;
+                line-height: 1.5;
+                -webkit-text-size-adjust: 100%;
+                -moz-tab-size: 4;
+                -o-tab-size: 4;
+                tab-size: 4;
+                font-family: Palanquin, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+            }
+            * {
+                font-family: Palanquin, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+                scrollbar-width: thin;
+                scrollbar-color: rgba(203, 213, 225, 1) transparent;
+            }
+            *::-webkit-scrollbar {
+                width: 6px;
+            }
+            *::-webkit-scrollbar-track {
+                background: transparent;
+            }
+            *::-webkit-scrollbar-thumb {
+                background-color: rgba(203, 213, 225, 1);
+                border-radius: 3px;
+                border: 0;
+            }
+
+            #react-root {
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                background-color: rgb(1, 1, 1, 0.5) !important;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+                color: initial !important;
+                font-size: 16px !important;
+                line-height: 1.5 !important;
+            }
+            #react-root * {
+                box-sizing: border-box !important;
+            }
+        `;
+
+        shadowRoot.appendChild(tailwindLink);
+        shadowRoot.appendChild(styleElement);
+        shadowRoot.appendChild(container);
+
+        await new Promise((resolve) => {
+            tailwindLink.onload = resolve;
+        });
+
+        const root = createRoot(container);
+        document.body.style.overflow = 'hidden';
+        root.render(
+            <ViewApplications
+                applications={applications}
+                onClose={() => {
+                    root.unmount();
+                    document.body.style.overflow = 'auto';
+                    document.body.removeChild(modalRoot);
+                    chrome.storage.local.set({ disabled: false });
                 }}
             />
         );
