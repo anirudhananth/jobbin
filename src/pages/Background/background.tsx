@@ -164,11 +164,12 @@ async function callAnthropic(prompt: string): Promise<string> {
             'Content-Type': 'application/json',
             'X-API-Key': apiKey,
             'anthropic-version': '2023-06-01',
+            'anthropic-dangerous-direct-browser-access': 'true'
         },
         body: JSON.stringify({
             messages: [
                 {
-                    role: "Human",
+                    role: "user",
                     content: prompt,
                 }
             ],
@@ -182,7 +183,7 @@ async function callAnthropic(prompt: string): Promise<string> {
     }
 
     const data = await response.json();
-    return data.choices[0].message.content.trim();
+    return data.content[0].text.trim();
 }
 
 async function callOpenAI(prompt: string): Promise<string> {
@@ -210,7 +211,7 @@ async function callOpenAI(prompt: string): Promise<string> {
 }
 
 async function parseJobPostingWithAI(postingText: string): Promise<{ title: string; company: string; location: string; position: string; }> {
-    const prompt: string = `Given the following job posting, extract the job title, company, location, and position (the position field is only whether it's full-time, part-time, internship, etc.):
+    const prompt: string = `Given the following job posting, extract the job title, company, location, and position (exactly ONE of "Full-time", "Part-time", "Internship", "Contract", or "Other"):]):
 
     ${postingText}
 
@@ -224,7 +225,7 @@ async function parseJobPostingWithAI(postingText: string): Promise<{ title: stri
     try {
         const result: { [key: string]: string } = await chrome.storage.local.get(['apiProvider']);
         let response = null;
-        if (result.apiProvider === 'openai') {
+        if (result.apiProvider.toLowerCase() === 'openai') {
             response = await callOpenAI(prompt);
             console.log("OPENAI RESPONSE: ", response);
         } else {
@@ -241,10 +242,13 @@ async function parseJobPostingWithAI(postingText: string): Promise<{ title: stri
 }
 
 
-chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if ((request as JobParsingRequest).action === 'parseJobPosting') {
+        console.log('Parsing job posting with AI');
         parseJobPostingWithAI(request.postingText)
-            .then(sendResponse)
+            .then(result => {
+                sendResponse(result);
+            })
             .catch(error => sendResponse({ error: error.message }));
         return true;
     } else if ((request as JobApplicationRequest).action === 'closeModal') {

@@ -82,7 +82,7 @@ const ViewApplications: React.FC<ViewApplicationsProps> = ({ applications, onClo
                         </div>
                     </div>
 
-                    <div className="overflow-x-auto max-h-[500px] overflow-y-auto custom-scrollbar">
+                    <div className="overflow-x-auto max-h-[500px] overflow-y-auto custom-scrollbar pr-[10px]">
                         <table className={`min-w-full ${url.includes("linkedin") ? "text-[14px]" : "text-sm"}`}>
                             <thead className="bg-violet-500 text-white">
                                 <tr className="text-left">

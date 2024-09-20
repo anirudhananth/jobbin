@@ -4,6 +4,7 @@ import JobApplicationData from '../../types';
 import AddJob from '../../components/add-job';
 import '../../index.css'
 import ViewApplications from '../../components/view-applications';
+import Usage from "../../components/usage";
 
 // window.addEventListener('load', () => {
 //     chrome.storage.local.set({ disabled: false });
@@ -17,8 +18,12 @@ interface JobApplicationMessage {
 let isLoadingContent = false;
 let addJobModalRoot: HTMLDivElement | null = null;
 let viewJobsModalRoot: HTMLDivElement | null = null;
+let usageModalRoot: HTMLDivElement | null = null;
 let addJobRoot: Root | null = null;
 let viewApplicationsRoot: Root | null = null;
+let usageRoot: Root | null = null;
+let isCreatingViewJobs = false;
+let isOpeningUsage = false;
 
 function Content() {
     console.log("Job application detection script loaded");
@@ -42,7 +47,7 @@ function Content() {
     function safeSendMessage(message: JobApplicationMessage): void {
         if (chrome.runtime && chrome.runtime.sendMessage) {
             chrome.runtime.sendMessage(message, (response) => {
-                console.log("Response from background script:", response);
+                // console.log("Response from background script:", response);
                 if (chrome.runtime.lastError) {
                     console.log("Failed to send message:", chrome.runtime.lastError.message);
                 } else {
@@ -59,6 +64,11 @@ function Content() {
 
         return new Promise((resolve, reject) => {
             chrome.runtime.sendMessage({ action: "parseJobPosting", postingText }, (response) => {
+                if (chrome.runtime.lastError) {
+                    console.error("Runtime error:", chrome.runtime.lastError);
+                    reject(new Error(chrome.runtime.lastError.message));
+                    return;
+                }
                 if (response.error) {
                     reject(new Error(response.error));
                 } else {
@@ -120,8 +130,12 @@ function Content() {
         } else if (request.action === "refreshModals") {
             unMountAddJobApplications();
             unMountViewApplications();
+            unMountUsageModal();
             chrome.storage.local.set({ disabled: false });
             sendResponse({ success: true, message: "Modals refreshed" });
+        } else if (request.action === "openAboutModal") {
+            openUsage();
+            sendResponse({ success: true, message: "Usage modal opened" });
         } else {
             console.log("Unknown action received:", request.action);
             sendResponse({ success: false, message: "Unknown action" });
@@ -239,6 +253,15 @@ function Content() {
     }
 
     async function viewApplications(applications: JobApplicationData[]) {
+        if (document.getElementById('view-applications-popup')) {
+            console.log('Modal already exists, not creating a new one');
+            return;
+        }
+        if (isCreatingViewJobs) {
+            return;
+        }
+        isCreatingViewJobs = true;
+
         console.log("Viewing applications:", applications);
         const modalRoot = document.createElement('div');
         modalRoot.id = 'view-applications-popup';
@@ -324,6 +347,7 @@ function Content() {
                 applications={applications}
                 onClose={() => {
                     unMountViewApplications();
+                    isCreatingViewJobs = false;
                 }}
             />
         );
@@ -337,6 +361,117 @@ function Content() {
         document.body.style.overflow = 'auto';
         document.body.removeChild(viewJobsModalRoot);
         chrome.storage.local.set({ disabled: false });
+        isCreatingViewJobs = false;
+    }
+
+    async function openUsage() {
+        if (document.getElementById('usage-popup')) {
+            console.log('Modal already exists, not creating a new one');
+            return;
+        }
+        if (isOpeningUsage) {
+            return;
+        }
+        isOpeningUsage = true;
+
+        const modalRoot = document.createElement('div');
+        modalRoot.id = 'view-applications-popup';
+        modalRoot.style.position = 'absolute';
+        modalRoot.style.top = '0';
+        modalRoot.style.left = '0';
+        modalRoot.style.width = '0px';
+        modalRoot.style.height = '0px';
+        modalRoot.style.overflow = 'visible';
+        modalRoot.style.zIndex = '2147483647';
+
+        document.body.appendChild(modalRoot);
+        const shadowRoot = modalRoot.attachShadow({ mode: 'closed' });
+
+        const container = document.createElement('div');
+        container.id = 'react-root';
+
+        const tailwindLink = document.createElement('link');
+        tailwindLink.rel = 'stylesheet';
+        tailwindLink.href = chrome.runtime.getURL('tailwind.min.css');
+        const styleElement = document.createElement('style');
+        styleElement.textContent = `
+            :host {
+                all: initial;
+                line-height: 1.5;
+                -webkit-text-size-adjust: 100%;
+                -moz-tab-size: 4;
+                -o-tab-size: 4;
+                tab-size: 4;
+                font-family: Palanquin, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+            }
+            * {
+                font-family: Palanquin, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+                scrollbar-width: thin;
+                scrollbar-color: rgba(203, 213, 225, 1) transparent;
+            }
+            *::-webkit-scrollbar {
+                width: 6px;
+            }
+            *::-webkit-scrollbar-track {
+                background: transparent;
+            }
+            *::-webkit-scrollbar-thumb {
+                background-color: rgba(203, 213, 225, 1);
+                border-radius: 3px;
+                border: 0;
+            }
+
+            #react-root {
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                background-color: rgb(1, 1, 1, 0.5) !important;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+                color: initial !important;
+                font-size: 16px !important;
+                line-height: 1.5 !important;
+            }
+            #react-root * {
+                box-sizing: border-box !important;
+            }
+        `;
+
+        shadowRoot.appendChild(tailwindLink);
+        shadowRoot.appendChild(styleElement);
+        shadowRoot.appendChild(container);
+
+        await new Promise((resolve) => {
+            tailwindLink.onload = resolve;
+        });
+
+        const root = createRoot(container);
+        usageModalRoot = modalRoot;
+        usageRoot = root;
+        document.body.style.overflow = 'hidden';
+        root.render(
+            <Usage
+                onClose={() => {
+                    unMountUsageModal();
+                    isOpeningUsage = false;
+                }}
+            />
+        );
+    }
+
+    function unMountUsageModal() {
+        if (!usageModalRoot || !usageRoot) {
+            return;
+        }
+        usageRoot.unmount();
+        document.body.style.overflow = 'auto';
+        document.body.removeChild(usageModalRoot);
+        chrome.storage.local.set({ disabled: false });
+        isOpeningUsage = false;
     }
 
     async function handlePotentialSubmission(event: Event): Promise<void> {
@@ -369,7 +504,7 @@ function Content() {
                 buttonValue.includes('submit') ||
                 (buttonText.includes('apply') && target instanceof HTMLButtonElement && target.type === 'submit')
             ) {
-
+                console.log("BRUH: ", buttonText, buttonValue);
                 if (isJobApplicationPage()) {
                     isProcessing = true;
 
@@ -377,20 +512,7 @@ function Content() {
 
                     try {
                         const jobData = await extractJobDataWithAI();
-                        // const jobData = {
-                        //     title: 'Software Engineer',
-                        //     company: 'Google',
-                        //     location: 'Mountain View, CA',
-                        //     position: 'Full-time',
-                        //     url: window.location.href,
-                        //     timestamp: new Date().toISOString(),
-                        // }
                         console.log("Job data extracted:", jobData);
-                        // safeSendMessage({
-                        //     action: "jobApplicationDetected",
-                        //     data: jobData
-                        // });
-
                         addJob(jobData);
                     } catch (error) {
                         console.error("Error extracting job data:", error);
