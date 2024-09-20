@@ -5,8 +5,9 @@ import { User } from "@supabase/supabase-js";
 import Dropdown from "./dropdown";
 import { MouseEvent } from "react";
 import { useDisabledState } from "./useDisabledState";
+import { RefreshCw } from "lucide-react";
 
-export default function Main() {
+export default function Main({ signOut }: { signOut: () => void }) {
     const [user, setUser] = useState<any>(null);
     const [disabled, setDisabled] = useDisabledState();
     const [dropdownIsOpen, setDropdownIsOpen] = useState<boolean>(false);
@@ -32,7 +33,11 @@ export default function Main() {
     }, []);
 
     const useApiKey = (e: MouseEvent) => {
-        chrome.storage.local.set({ openaiApiKey: (e.target as HTMLInputElement).value });
+        if (apiProvider === 'openai') {
+            chrome.storage.local.set({ openaiApiKey: (e.target as HTMLInputElement).value });
+        } else {
+            chrome.storage.local.set({ anthropicApiKey: (e.target as HTMLInputElement).value });
+        }
     }
 
     const handleApiProviderSelect = (option: string) => {
@@ -74,16 +79,59 @@ export default function Main() {
         })
     }
 
+    const handleRefresh = () => {
+        chrome.tabs.query({
+            url: [
+                "*://*.indeed.com/*",
+                "*://*.linkedin.com/*",
+                "*://*.glassdoor.com/*",
+                "*://*.monster.com/*",
+                "*://*.careerbuilder.com/*",
+                "*://*.simplyhired.com/*",
+                "*://*.ziprecruiter.com/*",
+                "*://*.usajobs.gov/*",
+                "*://*.dice.com/*",
+                "*://*.angel.co/*",
+                "https://api.anthropic.com/*",
+                "https://api.openai.com/*",
+                "https://*.supabase.co/*"
+            ]
+        }, function (tabs) {
+            //   chrome.tabs.sendMessage(tabs[0].id!, { action: "refreshModals" });
+            tabs.forEach(tab => {
+                if (tab.id) {
+                    chrome.tabs.sendMessage(tab.id, { action: "refreshModals" }, (response) => {
+                        if (chrome.runtime.lastError) {
+                            console.log(`Error sending message to tab ${tab.id}: ${chrome.runtime.lastError.message}`);
+                        } else {
+                            console.log(`Message sent successfully to tab ${tab.id}`);
+                        }
+                    });
+                }
+            })
+        });
+    }
+
     return (
         <>
             <div onClick={() => { if (dropdownIsOpen) setDropdownIsOpen(false) }} className="p-2 bg-white text-gray-900">
                 <div className="grid grid-cols-1 px-4 pt-4 overflow-hidden sm:justify-center flex-wrap bg-gray-100">
-                    <a rel="noopener noreferrer" href="#" className={`cursor-default text-start text-2xl pl-2 font-bold flex-shrink-0 py-2 text-gray-900`}>Welcome {user ? ", " + user.firstName : ""}!</a>
+                    {/* <a rel="noopener noreferrer" href="#" className={`cursor-default text-start text-2xl pl-2 font-bold flex-shrink-0 py-2 text-gray-900`}>Welcome {user ? ", " + user.firstName : ""}!</a> */}
+                    <div className="flex items-center justify-between">
+                        <a rel="noopener noreferrer" href="#" className={`cursor-default text-start text-2xl pl-2 font-bold flex-shrink-0 py-2 text-gray-900`}>Welcome{user ? ", " + user.firstName : ""}!</a>
+                        <button
+                            onClick={handleRefresh}
+                            className="p-2 rounded-full hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300"
+                            aria-label="Refresh"
+                        >
+                            <RefreshCw size={20} />
+                        </button>
+                    </div>
                 </div>
                 <div className="pt-4 bg-gray-100 dark:bg-gray-100">
                     <div className={`col-span-full sm:col-span-3 w-64 mx-auto`}>
                         <label htmlFor="key" className={`text-sm text-left font-bold text-gray-800 dark:text-gray-800 overflow-auto`}>Enter your OpenAI / Anthropic API Key if your have one. AI will extract the job details to add to your application list.</label>
-                        <input id="key" type="text" placeholder="API Key" className={`!w-full text-sm h-10 px-3 my-4 border-2 rounded-md focus:ring focus:ring-opacity-75 text-gray-600 focus:ring-violet-600 focus:outline-none focus:border-none border-gray-600 dark:text-gray-600 dark:focus:ring-violet-600 dark:border-gray-600`} />
+                        <input id="key" type="text" placeholder="API Key" className={`!w-full text-sm h-10 px-3 my-4 border-2 rounded-md focus:ring-opacity-75 text-gray-600 focus:ring-violet-500 focus:outline-violet-500 focus:border-violet-500 border-gray-600 `} />
                     </div>
                     <div className="flex flex-col justify-between gap-4 pb-4">
                         <Dropdown
@@ -91,11 +139,13 @@ export default function Main() {
                             onSelect={handleApiProviderSelect}
                             isOpen={dropdownIsOpen}
                             setIsOpen={setDropdownIsOpen}
+                            width="w-48"
+                            marginBottom="mb-4"
                         />
                         <button onClick={(e: MouseEvent<HTMLButtonElement>) => useApiKey(e)} disabled={disabled} type="button" className={`px-8 py-3 font-semibold rounded ${disabled ? "bg-gray-400 text-gray-600 bg-opacity-50" : "bg-gray-800 text-gray-100 hover:bg-violet-500 focus:bg-violet-600"} w-48 mx-auto`}>USE KEY</button>
                         <button onClick={handleViewApplications} disabled={disabled} type="button" className={`px-8 py-3 font-semibold rounded ${disabled ? "bg-gray-400 text-gray-600 bg-opacity-50" : "bg-gray-800 text-gray-100 hover:bg-violet-500 focus:bg-violet-600"} w-48 mx-auto`}>VIEW APPLICATIONS</button>
                         <button onClick={handleAddApplication} disabled={disabled} type="button" className={`px-8 py-3 font-semibold rounded ${disabled ? "bg-gray-400 text-gray-600 bg-opacity-50" : "bg-gray-800 text-gray-100 hover:bg-violet-500 focus:bg-violet-600"} w-48 mx-auto`}>ADD APPLICATION</button>
-                        <button type="button" disabled={disabled} className={`px-8 py-3 font-semibold rounded ${disabled ? "bg-gray-400 text-gray-600 bg-opacity-50" : "bg-gray-800 text-gray-100 hover:bg-violet-500 focus:bg-violet-600"} w-48 mx-auto`}>SIGN OUT</button>
+                        <button onClick={signOut} type="button" disabled={disabled} className={`px-8 py-3 font-semibold rounded ${disabled ? "bg-gray-400 text-gray-600 bg-opacity-50" : "bg-gray-800 text-gray-100 hover:bg-violet-500 focus:bg-violet-600"} w-48 mx-auto`}>SIGN OUT</button>
                     </div>
                 </div>
             </div>

@@ -1,13 +1,13 @@
 import { unmountComponentAtNode } from 'react-dom';
-import { createRoot } from 'react-dom/client';
+import { createRoot, Root } from 'react-dom/client';
 import JobApplicationData from '../../types';
 import AddJob from '../../components/add-job';
 import '../../index.css'
 import ViewApplications from '../../components/view-applications';
 
-window.addEventListener('load', () => {
-    chrome.storage.local.set({ disabled: false });
-})
+// window.addEventListener('load', () => {
+//     chrome.storage.local.set({ disabled: false });
+// })
 
 interface JobApplicationMessage {
     action: 'jobApplicationDetected' | 'jobDataCollected' | 'parseJobPosting' | 'closeModal' | 'enableButton';
@@ -15,7 +15,10 @@ interface JobApplicationMessage {
 }
 
 let isLoadingContent = false;
-let modalRoot: HTMLDivElement | null = null;
+let addJobModalRoot: HTMLDivElement | null = null;
+let viewJobsModalRoot: HTMLDivElement | null = null;
+let addJobRoot: Root | null = null;
+let viewApplicationsRoot: Root | null = null;
 
 function Content() {
     console.log("Job application detection script loaded");
@@ -114,6 +117,11 @@ function Content() {
             console.log("Opening view applications modal with data:", request.data);
             viewApplications(request.data);
             sendResponse({ success: true, message: "View applications modal opened" });
+        } else if (request.action === "refreshModals") {
+            unMountAddJobApplications();
+            unMountViewApplications();
+            chrome.storage.local.set({ disabled: false });
+            sendResponse({ success: true, message: "Modals refreshed" });
         } else {
             console.log("Unknown action received:", request.action);
             sendResponse({ success: false, message: "Unknown action" });
@@ -200,28 +208,34 @@ function Content() {
         });
 
         const root = createRoot(container);
+        addJobModalRoot = modalRoot;
+        addJobRoot = root;
         document.body.style.overflow = 'hidden';
         root.render(
             <AddJob
                 jobData={jobData}
                 onClose={() => {
-                    root.unmount();
-                    document.body.style.overflow = 'auto';
-                    document.body.removeChild(modalRoot);
-                    chrome.storage.local.set({ disabled: false });
+                    unMountAddJobApplications();
                 }}
                 onAdd={(updatedJobData: JobApplicationData) => {
                     safeSendMessage({
                         action: "jobDataCollected",
                         data: updatedJobData
                     });
-                    root.unmount();
-                    document.body.style.overflow = 'auto';
-                    document.body.removeChild(modalRoot);
-                    chrome.storage.local.set({ disabled: false });
+                    unMountAddJobApplications();
                 }}
             />
         );
+    }
+
+    function unMountAddJobApplications() {
+        if (!addJobModalRoot || !addJobRoot) {
+            return;
+        }
+        addJobRoot.unmount();
+        document.body.style.overflow = 'auto';
+        document.body.removeChild(addJobModalRoot);
+        chrome.storage.local.set({ disabled: false });
     }
 
     async function viewApplications(applications: JobApplicationData[]) {
@@ -302,18 +316,27 @@ function Content() {
         });
 
         const root = createRoot(container);
+        viewJobsModalRoot = modalRoot;
+        viewApplicationsRoot = root;
         document.body.style.overflow = 'hidden';
         root.render(
             <ViewApplications
                 applications={applications}
                 onClose={() => {
-                    root.unmount();
-                    document.body.style.overflow = 'auto';
-                    document.body.removeChild(modalRoot);
-                    chrome.storage.local.set({ disabled: false });
+                    unMountViewApplications();
                 }}
             />
         );
+    }
+
+    function unMountViewApplications() {
+        if (!viewJobsModalRoot || !viewApplicationsRoot) {
+            return;
+        }
+        viewApplicationsRoot.unmount();
+        document.body.style.overflow = 'auto';
+        document.body.removeChild(viewJobsModalRoot);
+        chrome.storage.local.set({ disabled: false });
     }
 
     async function handlePotentialSubmission(event: Event): Promise<void> {

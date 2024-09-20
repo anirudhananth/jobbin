@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-export default function Dropdown({ options, onSelect, isOpen, setIsOpen }: { options: string[], onSelect: (option: string) => void, isOpen: boolean, setIsOpen: (isOpen: boolean) => void }) {
+export default function Dropdown({ options, onSelect, isOpen, setIsOpen, width, marginBottom }: { options: string[], onSelect: (option: string) => void, isOpen: boolean, setIsOpen: (isOpen: boolean) => void, width: string, marginBottom: string }) {
     // const [isOpen, setIsOpen] = useState(false);
     const [selectedOption, setSelectedOption] = useState(options[0]);
 
@@ -11,7 +11,7 @@ export default function Dropdown({ options, onSelect, isOpen, setIsOpen }: { opt
     }
 
     return (
-        <div className="relative inline-block text-left w-48 mx-auto mb-4">
+        <div className={`relative inline-block text-left ${width} mx-auto ${marginBottom}`}>
             <div>
                 <button
                     type="button"

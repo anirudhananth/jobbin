@@ -108,6 +108,10 @@ function Popup() {
       setUser(null);
       setIsSignedIn(false);
       chrome.storage.local.remove('user');
+      chrome.storage.local.set({ openaiApiKey: '' });
+      chrome.storage.local.set({ anthropicApiKey: '' });
+      chrome.storage.local.set({ apiProvider: '' });
+      chrome.storage.local.set({ disabled: false });
     })
   }
 
@@ -120,7 +124,9 @@ function Popup() {
           login={(email, password) => login(email, password)}
         />
       ) : (
-        <Main />
+        <Main
+          signOut={() => signOut()}
+        />
       )}
     </div>
   );
