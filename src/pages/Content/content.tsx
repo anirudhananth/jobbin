@@ -476,16 +476,6 @@ function Content() {
 
     async function handlePotentialSubmission(event: Event): Promise<void> {
         if (isProcessing) return;
-        // isProcessing = true;
-        // const jobData = {
-        //     title: 'Software Engineer',
-        //     company: 'Google',
-        //     location: 'Mountain View, CA',
-        //     position: 'Full-time',
-        //     url: window.location.href,
-        //     timestamp: new Date().toISOString(),
-        // }
-        // addJob(jobData);
 
         const target = event.target as HTMLElement;
         const form = target.closest('form');
@@ -504,18 +494,29 @@ function Content() {
                 buttonValue.includes('submit') ||
                 (buttonText.includes('apply') && target instanceof HTMLButtonElement && target.type === 'submit')
             ) {
-                console.log("BRUH: ", buttonText, buttonValue);
                 if (isJobApplicationPage()) {
                     isProcessing = true;
 
                     event.preventDefault();
 
                     try {
-                        const jobData = await extractJobDataWithAI();
-                        console.log("Job data extracted:", jobData);
-                        addJob(jobData);
+                        const result = await chrome.storage.local.get(['openaiApiKey', 'anthropicApiKey']);
+                        if (!result.openaiApiKey && !result.anthropicApiKey) {
+                            addJob({
+                                title: '',
+                                company: '',
+                                location: '',
+                                position: '',
+                                url: window.location.href,
+                                timestamp: new Date().toISOString(),
+                            });
+                        } else {
+                            const jobData = await extractJobDataWithAI();
+                            console.log("Job data extracted:", jobData);
+                            addJob(jobData);
+                        }
                     } catch (error) {
-                        console.error("Error extracting job data:", error);
+                        console.log("Error extracting job data:", error);
                     }
 
                     if (form) processedForms.add(form);
@@ -531,6 +532,69 @@ function Content() {
     //         return
     //     }
     // }
+
+    // async function handlePotentialSubmission(event: Event): Promise<void> {
+    //     if (isProcessing) return;
+
+    //     const form = event.target as HTMLFormElement;
+    //     if (!(form instanceof HTMLFormElement)) return;
+    //     if (processedForms.has(form)) return;
+
+    //     if (isJobApplicationPage()) {
+    //         event.preventDefault();
+    //         isProcessing = true;
+
+    //         try {
+    //             // Create a Promise that resolves when the form submission is complete
+    //             const formSubmitPromise = new Promise<boolean>((resolve) => {
+    //                 const originalSubmit = form.submit;
+    //                 form.submit = function () {
+    //                     // Restore the original submit function
+    //                     form.submit = originalSubmit;
+    //                     // Attempt to submit the form
+    //                     try {
+    //                         originalSubmit.call(this);
+    //                         // If we reach here, assume the submission was successful
+    //                         resolve(true);
+    //                     } catch (error) {
+    //                         console.error("Form submission failed:", error);
+    //                         resolve(false);
+    //                     }
+    //                 };
+
+    //                 // Trigger the form submission
+    //                 form.requestSubmit();
+    //             });
+
+    //             // Wait for the form submission to complete
+    //             const wasSubmitted = await formSubmitPromise;
+
+    //             if (wasSubmitted) {
+    //                 const result = await chrome.storage.local.get(['openaiApiKey', 'anthropicApiKey']);
+    //                 if (!result.openaiApiKey && !result.anthropicApiKey) {
+    //                     addJob({
+    //                         title: '',
+    //                         company: '',
+    //                         location: '',
+    //                         position: '',
+    //                         url: window.location.href,
+    //                         timestamp: new Date().toISOString(),
+    //                     });
+    //                 } else {
+    //                     const jobData = await extractJobDataWithAI();
+    //                     console.log("Job data extracted:", jobData);
+    //                     addJob(jobData);
+    //                 }
+    //                 processedForms.add(form);
+    //             }
+    //         } catch (error) {
+    //             console.error("Error during form submission or job data extraction:", error);
+    //         } finally {
+    //             isProcessing = false;
+    //         }
+    //     }
+    // }
+
     const observer = new MutationObserver(async (mutations: MutationRecord[]) => {
         if (isListenerSetup) {
             return;

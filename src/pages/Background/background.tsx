@@ -1,10 +1,3 @@
-// import { Anthropic } from '@anthropic-ai/sdk';
-import { generateText } from 'ai';
-// import { openai } from '@ai-sdk/openai';
-import { createOpenAI } from '@ai-sdk/openai';
-import { OpenAI } from 'openai';
-import { createClient } from '@supabase/supabase-js';
-
 interface JobApplicationData {
     title: string;
     company: string;
@@ -12,7 +5,6 @@ interface JobApplicationData {
     position: string;
     url: string;
     timestamp: string;
-    // user_id: string;
 }
 
 interface JobApplicationRequest {
@@ -25,9 +17,7 @@ interface JobParsingRequest {
     postingText: string;
 }
 
-// let supabase: any = null;
 const supabaseUrl = 'https://ykcecftnsyyclchogssh.supabase.co';
-// const clerk = new ClerkProvider({});
 
 async function getOpenAIApiKey() {
     return new Promise<string>((resolve) => {
@@ -56,20 +46,11 @@ async function getAnthropicApiKey() {
 
 chrome.runtime.onInstalled.addListener(async () => {
     console.log('Extension installed!');
-    // chrome.storage.local.set({ jobApplications: [] as JobApplicationData[] });
     chrome.storage.local.set({ disabled: false });
     chrome.storage.local.set({
         supabaseKey: 'KEY'
     });
-
-    // addJobApplication({
-    //     title: 'Software Engineer',
-    //     company: 'Google',
-    //     location: 'Mountain View, CA',
-    //     position: 'Full-time',
-    //     url: 'https://google.com',
-    //     timestamp: new Date().toISOString()
-    // });
+    chrome.storage.local.set({ apiProvider: 'OpenAI' });
 });
 
 chrome.runtime.onStartup.addListener(() => {

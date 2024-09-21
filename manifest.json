@@ -24,12 +24,12 @@
     "*://*.careerbuilder.com/*",
     "*://*.simplyhired.com/*",
     "*://*.ziprecruiter.com/*",
-    "*://*.usajobs.gov/*",
     "*://*.dice.com/*",
     "*://*.angel.co/*",
     "https://api.anthropic.com/*",
     "https://api.openai.com/*",
-    "https://*.supabase.co/*"
+    "https://*.supabase.co/*",
+    "*://*.wd5.myworkdayjobs.com/*"
   ],
   "options_page": "js/options.html",
   "background": {
@@ -46,13 +46,11 @@
         "*://*.linkedin.com/*",
         "*://*.glassdoor.com/*",
         "*://*.monster.com/*",
-        "*://*.careerbuilder.com/*",
         "*://*.simplyhired.com/*",
         "*://*.ziprecruiter.com/*",
-        "*://*.usajobs.gov/*",
-        "*://*.dice.com/*",
         "*://*.angel.co/*",
-        "*://*.wellfound.com/jobs*"
+        "*://*.wellfound.com/jobs*",
+        "*://*.wd5.myworkdayjobs.com/*"
       ],
       "js": [
         "js/contentScript.js"

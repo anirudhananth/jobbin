@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import JobApplicationData from '../types';
-import { Search, X } from 'lucide-react';
+import { ExternalLink, Search, X } from 'lucide-react';
 import debounce from 'lodash/debounce';
 
 interface ViewApplicationsProps {
@@ -66,7 +66,7 @@ const ViewApplications: React.FC<ViewApplicationsProps> = ({ applications, onClo
                         <X className="text-white font-bold" size={24} />
                     </button>
                     <div className="flex justify-between items-center mb-4 pr-4 pl-1">
-                        <h2 className="text-4xl font-semibold leading-tight">Job Applications</h2>
+                        <h2 className={`${url.includes("linkedin") ? "text-4xl" : "text-2xl"} font-semibold leading-tight pl-4`}>Job Applications</h2>
                         <div className="relative w-2/5">
                             <Search id="search-icon" className={`absolute font-bold ${isFocused ? "text-violet-500" : "text-gray-400"} left-3 top-1/2 transform -translate-y-1/2`} size={20} />
                             <input
@@ -82,7 +82,7 @@ const ViewApplications: React.FC<ViewApplicationsProps> = ({ applications, onClo
                         </div>
                     </div>
 
-                    <div className="overflow-x-auto max-h-[500px] overflow-y-auto custom-scrollbar pr-[10px]">
+                    <div className="overflow-x-auto max-h-[500px] overflow-y-auto custom-scrollbar pr-[4px]">
                         <table className={`min-w-full ${url.includes("linkedin") ? "text-[14px]" : "text-sm"}`}>
                             <thead className="bg-violet-500 text-white">
                                 <tr className="text-left">
@@ -90,12 +90,13 @@ const ViewApplications: React.FC<ViewApplicationsProps> = ({ applications, onClo
                                     <th className="p-3 w-[20%]">Company</th>
                                     <th className="p-3 w-[20%]">Location</th>
                                     <th className="p-3 w-[13%]">Position</th>
-                                    <th className="p-3 rounded-tr-lg w-1/6">Applied<br /> Date</th>
+                                    <th className="p-3 w-1/6">Applied<br /> Date</th>
+                                    <th className="p-3 rounded-tr-lg"></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {filteredApplications.map((app, index) => (
-                                    <tr key={index} className="border-b border-opacity-20 border-gray-300 bg-gray-50">
+                                    <tr key={index} className="border-b border-opacity-20 border-gray-300 bg-gray-50 font-semibold text-gray-800">
                                         <td className="p-3">{app.title}</td>
                                         <td className="p-3">{app.company}</td>
                                         <td className="p-3">{app.location}</td>
@@ -103,6 +104,16 @@ const ViewApplications: React.FC<ViewApplicationsProps> = ({ applications, onClo
                                         <td className="p-3">
                                             <p>{new Date(app.timestamp).toLocaleDateString()}</p>
                                             <p className="text-gray-600">{new Date(app.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</p>
+                                        </td>
+                                        <td className="p-3">
+                                            {
+                                                app.url !== "" ?
+                                                    <div className='cursor-pointer !text-violet-600 rounded-full hover:bg-gray-100 focus:text-violet-700'>
+                                                        <a className="" target="_blank" rel="noopener noreferrer" href={app.url}>
+                                                            <ExternalLink size={18} />
+                                                        </a>
+                                                    </div> : ""
+                                            }
                                         </td>
                                     </tr>
                                 ))}
