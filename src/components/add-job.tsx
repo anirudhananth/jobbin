@@ -10,6 +10,13 @@ interface JobDataProps {
 }
 
 const AddJob: React.FC<JobDataProps> = ({ jobData, onClose, onAdd }) => {
+    const firstInputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        if (firstInputRef.current) {
+            firstInputRef.current.focus();
+        }
+    }, []);
     const [formData, setFormData] = useState<Partial<JobApplicationData>>(jobData || {});
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
@@ -62,7 +69,7 @@ const AddJob: React.FC<JobDataProps> = ({ jobData, onClose, onAdd }) => {
                             <div className="grid grid-cols-1 gap-4 col-span-full lg:col-span-1">
                                 <div className={`col-span-full sm:col-span-3 ${url.includes("linkedin") ? "w-full" : "w-96"}`}>
                                     <label htmlFor="Job Title" className={`${url.includes("linkedin") ? "text-[13px]" : "text-sm"} italic px-1 font-bold text-gray-800`}>Job Title</label>
-                                    <input onChange={handleInputChange} id="title" type="title" defaultValue={jobData && jobData.title ? jobData.title : ""} placeholder="Title of the role" className={`!w-full ${url.includes("linkedin") ? "h-14" : "h-10"} px-4 rounded-md focus:ring focus:ring-opacity-75 text-gray-600 focus:ring-violet-600 border-gray-300 focus:border-none focus:outline-none`} required />
+                                    <input ref={firstInputRef} onChange={handleInputChange} id="title" type="title" defaultValue={jobData && jobData.title ? jobData.title : ""} placeholder="Title of the role" className={`!w-full ${url.includes("linkedin") ? "h-14" : "h-10"} px-4 rounded-md focus:ring focus:ring-opacity-75 text-gray-600 focus:ring-violet-600 border-gray-300 focus:border-none focus:outline-none`} required />
                                 </div>
                                 <div className={`col-span-full sm:col-span-3 ${url.includes("linkedin") ? "w-full" : "w-96"}`}>
                                     <label htmlFor="Company" className={`${url.includes("linkedin") ? "text-[13px]" : "text-sm"} italic px-1 font-bold text-gray-800`}>Company</label>

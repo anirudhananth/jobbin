@@ -48,7 +48,7 @@ chrome.runtime.onInstalled.addListener(async () => {
     console.log('Extension installed!');
     chrome.storage.local.set({ disabled: false });
     chrome.storage.local.set({
-        supabaseKey: 'KEY'
+        supabaseKey: 'Key'
     });
     chrome.storage.local.set({ apiProvider: 'OpenAI' });
 });

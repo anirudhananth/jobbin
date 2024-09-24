@@ -9,12 +9,7 @@
   },
   "permissions": [
     "storage",
-    "cookies",
-    "tabs",
-    "bookmarks",
-    "activeTab",
-    "scripting",
-    "identity"
+    "tabs"
   ],
   "host_permissions": [
     "*://*.indeed.com/*",
