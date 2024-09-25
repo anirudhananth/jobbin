@@ -17,7 +17,8 @@ interface JobParsingRequest {
     postingText: string;
 }
 
-const supabaseUrl = 'https://ykcecftnsyyclchogssh.supabase.co';
+// const supabaseUrl = 'https://ykcecftnsyyclchogssh.supabase.co';
+const JOBBIN_SERVER_URL = "https://jobbin-server.vercel.app";
 
 async function getOpenAIApiKey() {
     return new Promise<string>((resolve) => {
@@ -48,7 +49,7 @@ chrome.runtime.onInstalled.addListener(async () => {
     console.log('Extension installed!');
     chrome.storage.local.set({ disabled: false });
     chrome.storage.local.set({
-        supabaseKey: 'Key'
+        supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlrY2VjZnRuc3l5Y2xjaG9nc3NoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjYxODc5MTksImV4cCI6MjA0MTc2MzkxOX0.2qtrmzcwFucw-bqsVnpdGmAUdx0Z1wHlV6SI2GZbG_E'
     });
     chrome.storage.local.set({ apiProvider: 'OpenAI' });
 });
@@ -65,12 +66,9 @@ async function addJobApplication(job: JobApplicationData) {
     }
 
     try {
-        const supabaseKey = await getSupabaseApiKey();
-        console.log(supabaseKey);
-        const response = await fetch(`${supabaseUrl}/rest/v1/job_applications`, {
+        const response = await fetch(`${JOBBIN_SERVER_URL}/add_job`, {
             method: 'POST',
             headers: {
-                'apikey': supabaseKey,
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({ ...job, user_id: user.id })
@@ -95,14 +93,7 @@ async function getJobApplications(): Promise<JobApplicationData[]> {
     }
 
     try {
-        const supabaseKey = await getSupabaseApiKey();
-        const response = await fetch(`${supabaseUrl}/rest/v1/job_applications?user_id=eq.${user.id}`, {
-            method: 'GET',
-            headers: {
-                'apikey': supabaseKey,
-                'Authorization': `Bearer ${supabaseKey}`
-            }
-        });
+        const response = await fetch(`${JOBBIN_SERVER_URL}/get_jobs?user_id=${user.id}`);
 
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);

@@ -24,7 +24,8 @@
     "https://api.anthropic.com/*",
     "https://api.openai.com/*",
     "https://*.supabase.co/*",
-    "*://*.wd5.myworkdayjobs.com/*"
+    "*://*.wd5.myworkdayjobs.com/*",
+    "https://jobbin-server.vercel.app/"
   ],
   "options_page": "js/options.html",
   "background": {
@@ -45,7 +46,8 @@
         "*://*.ziprecruiter.com/*",
         "*://*.angel.co/*",
         "*://*.wellfound.com/jobs*",
-        "*://*.wd5.myworkdayjobs.com/*"
+        "*://*.wd5.myworkdayjobs.com/*",
+        "https://jobbin-server.vercel.app/"
       ],
       "js": [
         "js/contentScript.js"
