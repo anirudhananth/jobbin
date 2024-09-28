@@ -61,6 +61,25 @@ function Content() {
         }
     }
 
+    function convertToEST(date: string): string {
+        const estOffset = -5; // EST is UTC-5
+
+        // Create a new Date object from the ISO string
+        const utcDate = new Date(date);
+
+        // Get the UTC timestamp
+        const utcTimestamp = utcDate.getTime();
+
+        // Calculate the EST timestamp
+        const estTimestamp = utcTimestamp + (estOffset * 60 * 60 * 1000);
+
+        // Create a new Date object for EST
+        const estDate = new Date(estTimestamp);
+
+        // Format the EST date as an ISO string
+        return estDate.toISOString();
+    }
+
     function extractJobDataWithAI(): Promise<Partial<JobApplicationData>> {
         const postingText = document.body.innerText;
 
@@ -80,7 +99,7 @@ function Content() {
                         location: response.location,
                         position: response.position,
                         url: window.location.href,
-                        timestamp: new Date().toISOString(),
+                        timestamp: convertToEST(new Date().toISOString()),
                     })
                 }
             })
@@ -252,6 +271,7 @@ function Content() {
                     }
                 }}
                 onAdd={(updatedJobData: JobApplicationData) => {
+                    updatedJobData.url = window.location.href;
                     safeSendMessage({
                         action: "jobDataCollected",
                         data: updatedJobData
@@ -617,7 +637,7 @@ function Content() {
                                     location: '',
                                     position: '',
                                     url: window.location.href,
-                                    timestamp: new Date().toISOString(),
+                                    timestamp: convertToEST(new Date().toISOString()),
                                 });
                             }, 1000);
                         } else {

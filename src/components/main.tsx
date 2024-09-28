@@ -17,16 +17,37 @@ export default function Main({ signOut }: { signOut: () => void }) {
     const [showApplications, setShowApplications] = useState<boolean>(false);
     const [jobData, setJobData] = useState<JobApplicationData>({
         url: '',
-        timestamp: new Date().toISOString(),
+        timestamp: convertToEST(new Date().toISOString()),
         title: '',
         company: '',
         location: '',
         position: '',
+        status: 'Applied'
     });
 
     const initUser = async () => {
         const { user } = await chrome.storage.local.get(['user']);
         setUser(user);
+    }
+
+
+    function convertToEST(date: string): string {
+        const estOffset = -5; // EST is UTC-5
+
+        // Create a new Date object from the ISO string
+        const utcDate = new Date(date);
+
+        // Get the UTC timestamp
+        const utcTimestamp = utcDate.getTime();
+
+        // Calculate the EST timestamp
+        const estTimestamp = utcTimestamp + (estOffset * 60 * 60 * 1000);
+
+        // Create a new Date object for EST
+        const estDate = new Date(estTimestamp);
+
+        // Format the EST date as an ISO string
+        return estDate.toISOString();
     }
 
     useEffect(() => {
@@ -64,7 +85,6 @@ export default function Main({ signOut }: { signOut: () => void }) {
             const local: { [key: string]: JobApplicationData[] } = await chrome.storage.local.get(['jobApplications']);
             if (local.jobApplications) {
                 const jobApplications = local.jobApplications;
-                console.log("LMFAO: ", jobApplications);
                 setJobApplications(jobApplications);
                 setShowApplications(true);
                 setDisabled(true);

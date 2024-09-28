@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import JobApplicationData from '../types';
-import { ExternalLink, Search, X } from 'lucide-react';
+import { ChevronDown, ExternalLink, Search, X } from 'lucide-react';
 import debounce from 'lodash/debounce';
+import Loader from './loader';
 
 interface ViewApplicationsProps {
     applications: JobApplicationData[];
@@ -12,6 +13,17 @@ const ViewApplications: React.FC<ViewApplicationsProps> = ({ applications, onClo
     const [isFocused, setIsFocused] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [filteredApplications, setFilteredApplications] = useState(applications);
+    const [updatingStatus, setUpdatingStatus] = useState<boolean>(false);
+    const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+    const statusOptions: {
+        [key: string]: string;
+    } = {
+        'Applied': 'bg-violet-600 text-gray-50 hover:bg-violet-700 focus:bg-violet-800',
+        'Screening': 'bg-yellow-500 text-gray-50 hover:bg-yellow-600 focus:bg-yellow-700',
+        'Rejected': 'bg-red-600 text-gray-50 hover:bg-red-700 focus:bg-red-800',
+        'Interview': 'bg-orange-500 text-gray-50 hover:bg-orange-600 focus:bg-orange-700',
+        'Offer': 'bg-green-600 text-gray-50 hover:bg-green-700 focus:bg-green-800'
+    };
 
     const url = window.location.href;
 
@@ -36,6 +48,29 @@ const ViewApplications: React.FC<ViewApplicationsProps> = ({ applications, onClo
         setSearchTerm(e.target.value);
     };
 
+    const handleStatusChange = async (jobId: string, newStatus: string) => {
+        setUpdatingStatus(true);
+        try {
+            await chrome.runtime.sendMessage({
+                action: 'updateJobStatus',
+                data: { jobId, status: newStatus }
+            });
+            // Update the local state after successful update
+            setFilteredApplications(prev =>
+                prev.map(app => app.id === jobId ? { ...app, status: newStatus } : app)
+            );
+        } catch (error) {
+            console.error('Failed to update status:', error);
+            // Handle error (e.g., show an error message to the user)
+        } finally {
+            setUpdatingStatus(false);
+        }
+    };
+
+    const toggleDropdown = (jobId: string) => {
+        setOpenDropdown(openDropdown === jobId ? null : jobId);
+    };
+
     return (
         <>
             <style>
@@ -54,10 +89,36 @@ const ViewApplications: React.FC<ViewApplicationsProps> = ({ applications, onClo
                     .custom-scrollbar {
                         scrollbar-color: var(--scrollbar-color) var(--scrollbar-bg-color);
                     }
+                    .status-dropdown {
+                        position: relative;
+                    }
+                    .status-dropdown-content {
+                        position: absolute;
+                        background-color: #f9f9f9;
+                        width: max-content;
+                        box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+                        z-index: 1000;
+                        top: 100%;
+                        right: 0;
+                    }
+                    .status-option {
+                        padding: 12px 16px;
+                        text-decoration: none;
+                        display: block;
+                        cursor: pointer;
+                    }
+                    .status-option:hover {
+                        background-color: #f1f1f1;
+                    }
                 `}
             </style>
-            <dialog open className={`bg-transparent ${url.includes("linkedin") ? "w-1/2" : "w-4/5 max-w-4xl"} z-99`}>
+            <dialog open className={`bg-transparent ${url.includes("linkedin") ? "w-7/12" : "w-3/5"}`}>
                 <div className="container p-6 mx-auto bg-white rounded-lg shadow-lg text-gray-800">
+                    {updatingStatus && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 z-100">
+                            <Loader />
+                        </div>
+                    )}
                     <button
                         onClick={onClose}
                         className="absolute top-[4px] right-[3px] rounded-full p-1 border-white outline-white ring-white border-2 outline-2 ring-2 bg-violet-300 hover:bg-violet-400 focus:bg-violet-500 focus:outline-none focus:ring-2 focus:ring-white focus:outline-white focus:border-white"
@@ -84,13 +145,14 @@ const ViewApplications: React.FC<ViewApplicationsProps> = ({ applications, onClo
 
                     <div className="overflow-x-auto max-h-[500px] overflow-y-auto custom-scrollbar pr-[4px]">
                         <table className={`min-w-full ${url.includes("linkedin") ? "text-[14px]" : "text-sm"}`}>
-                            <thead className="bg-violet-500 text-white">
+                            <thead className={`bg-violet-500 text-white ${url.includes("linkedin") ? "h-24" : "h-14"}`}>
                                 <tr className="text-left">
                                     <th className="p-3 rounded-tl-lg w-1/3">Job Title</th>
                                     <th className="p-3 w-[20%]">Company</th>
                                     <th className="p-3 w-[20%]">Location</th>
                                     <th className="p-3 w-[13%]">Position</th>
-                                    <th className="p-3 w-1/6">Applied<br /> Date</th>
+                                    <th className="p-3 w-1/6">Time (EST) </th>
+                                    <th className="p-3">Status</th>
                                     <th className="p-3 rounded-tr-lg"></th>
                                 </tr>
                             </thead>
@@ -104,6 +166,31 @@ const ViewApplications: React.FC<ViewApplicationsProps> = ({ applications, onClo
                                         <td className="p-3">
                                             <p>{new Date(app.timestamp).toLocaleDateString()}</p>
                                             <p className="text-gray-600">{new Date(app.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</p>
+                                        </td>
+                                        <td className="p-3 text-right">
+                                            <div className="status-dropdown">
+                                                <span
+                                                    className={`px-3 py-1 font-semibold rounded-md cursor-pointer flex items-center justify-between ${statusOptions[app.status]}`}
+                                                    onClick={() => toggleDropdown(app.id!)}
+                                                >
+                                                    <span>{app.status}</span>
+                                                    <ChevronDown size={16} className="ml-2" />
+                                                </span>
+                                                {openDropdown === app.id &&
+                                                    (
+                                                        <div className="status-dropdown-content">
+                                                            {Object.keys(statusOptions).map((status) => (
+                                                                <div
+                                                                    key={status}
+                                                                    className="status-option text-center"
+                                                                    onClick={() => handleStatusChange(app.id!, status)}
+                                                                >
+                                                                    {status}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                            </div>
                                         </td>
                                         <td className="p-3">
                                             {

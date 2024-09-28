@@ -1,15 +1,17 @@
 interface JobApplicationData {
+    id: string
     title: string;
     company: string;
     location: string;
     position: string;
     url: string;
     timestamp: string;
+    status: string;
 }
 
 interface JobApplicationRequest {
-    action: 'jobDataCollected' | 'closeModal' | 'getJobApplications';
-    data: JobApplicationData | null;
+    action: 'jobDataCollected' | 'closeModal' | 'getJobApplications' | 'updateJobStatus';
+    data: JobApplicationData | null | { jobId: string, status: string };
 }
 
 interface JobParsingRequest {
@@ -105,6 +107,28 @@ async function getJobApplications(): Promise<JobApplicationData[]> {
     } catch (error) {
         console.error("Error during Supabase select:", error);
         return [];
+    }
+}
+
+async function updateJobStatus(jobId: string, status: string) {
+    try {
+        console.log("Updating job status...", jobId, status);
+        const response = await fetch(`${JOBBIN_SERVER_URL}/update_job`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ jobId, status })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        console.log("Job status updated successfully!");
+    } catch (error) {
+        console.error("Error updating job status: ", error);
+        throw error;
     }
 }
 
@@ -252,6 +276,19 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         };
 
         fetchApplications();
+        return true;
+    } else if (request.action === 'updateJobStatus') {
+        const updateStatus = async () => {
+            try {
+                await updateJobStatus(request.data.jobId, request.data.status);
+                sendResponse({ success: true });
+            } catch (error: any) {
+                console.error("Error updating job status: ", error);
+                sendResponse({ error: error.message });
+            }
+        };
+
+        updateStatus();
         return true;
     }
     return false;
