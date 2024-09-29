@@ -16,7 +16,7 @@ let currentJobApplication: JobApplicationData = {
     company: '',
     location: '',
     position: '',
-    status: ''
+    status: 'Applied'
 };
 
 export default JobApplicationData;

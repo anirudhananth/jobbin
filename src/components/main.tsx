@@ -134,7 +134,7 @@ export default function Main({ signOut }: { signOut: () => void }) {
             disabled: false,
             openaiApiKey: '',
             anthropicApiKey: '',
-            apiProvider: ''
+            apiProvider: 'OpenAI'
         });
         setDropdownIsOpen(false);
         setApiKeyValue('');

@@ -165,7 +165,7 @@ function Popup() {
 			chrome.storage.local.remove('user');
 			chrome.storage.local.set({ openaiApiKey: '' });
 			chrome.storage.local.set({ anthropicApiKey: '' });
-			chrome.storage.local.set({ apiProvider: '' });
+			chrome.storage.local.set({ apiProvider: 'OpenAI' });
 			chrome.storage.local.set({ disabled: false });
 		} catch (error) {
 			console.error('Error during Supabase sign-out:', error);

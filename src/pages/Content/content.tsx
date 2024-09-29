@@ -81,9 +81,10 @@ function Content() {
                         company: response.company,
                         location: response.location,
                         position: response.position,
+                        status: 'Applied',
                         url: window.location.href,
                         timestamp: convertToEST(new Date().toISOString()),
-                    })
+                    });
                 }
             })
         })
@@ -619,6 +620,7 @@ function Content() {
                                     company: '',
                                     location: '',
                                     position: '',
+                                    status: 'Applied',
                                     url: window.location.href,
                                     timestamp: convertToEST(new Date().toISOString()),
                                 });
