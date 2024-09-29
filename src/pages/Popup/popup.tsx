@@ -15,6 +15,7 @@ function Popup() {
 	const [isLoading, setIsLoading] = useState(true);
 	const [user, setUser] = useState<User | null>(null);
 	const [invalidCredentials, setInvalidCredentials] = useState(false);
+	const [userExists, setUserExists] = useState(false);
 	const allowedDomains: string[] = [
 		"indeed.com",
 		"linkedin.com",
@@ -74,6 +75,7 @@ function Popup() {
 
 	async function signUp(firstName: string, lastName: string, email: string, password: string) {
 		try {
+			setUserExists(false);
 			const response = await fetch(`${JOBBIN_SERVER_URL}/register`, {
 				method: 'POST',
 				headers: {
@@ -89,6 +91,11 @@ function Popup() {
 
 			if (!response.ok) {
 				console.log("Error signing up:", response);
+				const errorResponse = await response.json();
+				if (errorResponse.error.code === "user_already_exists") {
+					setUserExists(true);
+					return;
+				}
 				throw new Error(`HTTP error! status: ${response.status}`);
 			}
 
@@ -123,7 +130,6 @@ function Popup() {
 
 			if (!response.ok) {
 				const errorResponse = await response.json();
-				console.log("Error logging in:", errorResponse);
 				if (errorResponse.error.code === "invalid_credentials") {
 					setInvalidCredentials(true);
 					return;
@@ -171,26 +177,26 @@ function Popup() {
 			<style>
 				{
 					`.loader-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100%;
-            width: 100%;
-          }
+						display: flex;
+						justify-content: center;
+						align-items: center;
+						height: 100%;
+						width: 100%;
+					}
 
-          .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #3498db;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-          }
+					.loader {
+						border: 4px solid #f3f3f3;
+						border-top: 4px solid #3498db;
+						border-radius: 50%;
+						width: 40px;
+						height: 40px;
+						animation: spin 1s linear infinite;
+					}
 
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }`
+					@keyframes spin {
+						0% { transform: rotate(0deg); }
+						100% { transform: rotate(360deg); }
+					}`
 				}
 			</style>
 			<div className="">
@@ -205,6 +211,7 @@ function Popup() {
 								signUp={(firstName, lastName, email, password) => signUp(firstName, lastName, email, password)}
 								login={(email, password) => login(email, password)}
 								invalidCredentials={invalidCredentials}
+								userExists={userExists}
 							/>
 						) : (
 							<Main

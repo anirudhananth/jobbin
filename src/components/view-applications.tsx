@@ -268,7 +268,7 @@ const ViewApplications: React.FC<ViewApplicationsProps> = ({ applications, onClo
                                     <th className="p-3 w-[20%]">Company</th>
                                     <th className="p-3 w-[20%]">Location</th>
                                     <th className="p-3 w-[13%]">Position</th>
-                                    <th className="p-3 w-1/6">Time (EST) </th>
+                                    <th className="p-3 w-4/12">Time (EST) </th>
                                     <th className="p-3">Status</th>
                                     <th className="p-3 rounded-tr-lg"></th>
                                 </tr>
@@ -338,10 +338,10 @@ const ViewApplications: React.FC<ViewApplicationsProps> = ({ applications, onClo
                 </div>
             </dialog>
             {showConfirmModal && (
-                <div className="modal-overlay z-9999">
-                    <div className="flex flex-col max-w-md gap-2 p-6 rounded-md shadow-md bg-gray-50 text-gray-800">
-                        <h2 className="flex items-center gap-2 text-xl font-semibold leading-tight tracking-wide">
-                            <AlertTriangle className="w-6 h-6 text-violet-600" />
+                <div className={`modal-overlay z-9999`}>
+                    <div className={`flex flex-col gap-2 ${url.includes("linkedin") ? "p-10 max-w-xl" : "p-6 max-w-md"} rounded-md shadow-md bg-gray-50 text-gray-800`}>
+                        <h2 className={`flex items-center gap-2 ${url.includes("linkedin") ? "text-3xl" : "text-xl"} font-semibold leading-tight tracking-wide`}>
+                            <AlertTriangle className={`${url.includes("linkedin") ? "w-8 h-8" : "w-6 h-6"} text-violet-600`} />
                             Confirm Deletion
                         </h2>
                         <p className="flex-1 text-gray-600">
@@ -349,13 +349,13 @@ const ViewApplications: React.FC<ViewApplicationsProps> = ({ applications, onClo
                         </p>
                         <div className="flex flex-col justify-end gap-3 mt-6 sm:flex-row">
                             <button
-                                className="px-6 py-2 rounded-sm border border-gray-300 hover:bg-gray-100"
+                                className="px-6 py-2 rounded-md border bg-gray-100 text-gray-800 hover:bg-gray-200 focus:bg-gray-300"
                                 onClick={() => setShowConfirmModal(false)}
                             >
                                 Cancel
                             </button>
                             <button
-                                className="px-6 py-2 rounded-sm shadow-sm bg-violet-600 text-gray-50 hover:bg-violet-700"
+                                className="px-6 py-2 rounded-md shadow-sm bg-violet-500 hover:bg-violet-600 focus:bg-violet-700 dark:text-gray-50 dark:bg-violet-500 dark:hover:bg-violet-600"
                                 onClick={confirmDelete}
                             >
                                 Delete

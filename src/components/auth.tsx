@@ -1,6 +1,6 @@
 import { FormEvent, useState } from "react"
 
-export default function Auth({ signUp, login, invalidCredentials }: { signUp: (firstName: string, lastName: string, email: string, password: string) => void, login: (email: string, password: string) => void, invalidCredentials: boolean }) {
+export default function Auth({ signUp, login, invalidCredentials, userExists }: { signUp: (firstName: string, lastName: string, email: string, password: string) => void, login: (email: string, password: string) => void, invalidCredentials: boolean, userExists: boolean }) {
     const [isSignUp, setIsSignUp] = useState(false)
     const [firstName, setFirstName] = useState("")
     const [lastName, setLastName] = useState("")
@@ -8,12 +8,19 @@ export default function Auth({ signUp, login, invalidCredentials }: { signUp: (f
     const [password, setPassword] = useState("")
     const [confirmPassword, setConfirmPassword] = useState("")
     const [isWrongPassword, setIsWrongPassword] = useState(false)
+    const [isSmallPassword, setIsSmallPassword] = useState(false)
 
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault()
         if (isSignUp) {
+            setIsWrongPassword(false)
+            setIsSmallPassword(false)
             if (password !== confirmPassword) {
                 setIsWrongPassword(true)
+                return
+            }
+            if (password.length < 6) {
+                setIsSmallPassword(true)
                 return
             }
             setIsWrongPassword(false)
@@ -60,7 +67,6 @@ export default function Auth({ signUp, login, invalidCredentials }: { signUp: (f
                                 <div className={`col-span-full sm:col-span-3 w-64 mx-auto`}>
                                     <label htmlFor="ConfirmPassword" className={`text-sm italic px-1 font-bold text-gray-800`}>Confirm Password</label>
                                     <input id="confirmPassword" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Re-enter your password" className={`!w-full h-10 px-2 rounded-md focus:ring focus:ring-opacity-75 text-gray-600 focus:ring-violet-600 border-gray-300 focus:border-none focus:outline-none`} required />
-                                    {isWrongPassword && <label htmlFor="WrongPassword" className={`text-xs px-1 font-bold text-red-500 dark:text-red-500`}>Passwords don't match!</label>}
                                 </div>
                             )}
                             <button type="submit" className="px-8 py-3 font-semibold rounded bg-gray-800 text-gray-100 w-48 mx-auto hover:bg-violet-400 focus:bg-violet-600">{isSignUp ? "SIGN UP" : "LOGIN"}</button>
@@ -69,6 +75,21 @@ export default function Auth({ signUp, login, invalidCredentials }: { signUp: (f
                                     <label htmlFor="InvalidCredentials" className={`text-sm px-1 font-bold text-red-600`}>
                                         Invalid credentials.
                                     </label>
+                                </div>
+                            )}
+                            {isSignUp && isWrongPassword && (
+                                <div className="w-full text-center">
+                                    <label htmlFor="WrongPassword" className={`text-sm px-1 font-bold text-red-600`}>Passwords don't match.</label>
+                                </div>
+                            )}
+                            {isSignUp && isSmallPassword && (
+                                <div className="w-full text-center">
+                                    <label htmlFor="SmallPassword" className={`text-sm px-1 font-bold text-red-600`}>Password must be at least 6 characters long.</label>
+                                </div>
+                            )}
+                            {isSignUp && userExists && (
+                                <div className="w-full text-center">
+                                    <label htmlFor="UserExists" className={`text-sm px-1 font-bold text-red-600`}>User already exists.</label>
                                 </div>
                             )}
                         </div>
