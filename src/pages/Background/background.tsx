@@ -34,15 +34,6 @@ async function getOpenAIApiKey() {
     });
 }
 
-async function getSupabaseApiKey() {
-    return new Promise<string>((resolve) => {
-        chrome.storage.local.get(['supabaseKey'], (result) => {
-            console.log(result);
-            resolve(result.supabaseKey || '');
-        });
-    });
-}
-
 async function getAnthropicApiKey() {
     return new Promise<string>((resolve) => {
         chrome.storage.local.get(['anthropicApiKey'], (result) => {
