@@ -54,9 +54,6 @@ async function getAnthropicApiKey() {
 chrome.runtime.onInstalled.addListener(async () => {
     console.log('Extension installed!');
     chrome.storage.local.set({ disabled: false });
-    chrome.storage.local.set({
-        supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlrY2VjZnRuc3l5Y2xjaG9nc3NoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjYxODc5MTksImV4cCI6MjA0MTc2MzkxOX0.2qtrmzcwFucw-bqsVnpdGmAUdx0Z1wHlV6SI2GZbG_E'
-    });
     chrome.storage.local.set({ apiProvider: 'OpenAI' });
 });
 

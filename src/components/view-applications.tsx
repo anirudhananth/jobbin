@@ -223,7 +223,7 @@ const ViewApplications: React.FC<ViewApplicationsProps> = ({ applications, onClo
             <dialog open className={`bg-transparent ${url.includes("linkedin") ? "w-7/12" : "w-3/5"}`}>
                 <div onClick={() => { if (openDropdown) setOpenDropdown(null) }} className="container p-6 mx-auto bg-white rounded-lg shadow-lg text-gray-800">
                     {(updatingStatus || isDeleting) && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 z-100">
+                        <div className="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 z-[1000000]">
                             <Loader />
                         </div>
                     )}
