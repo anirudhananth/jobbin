@@ -45,12 +45,10 @@ function Job() {
 
         const jobDetails = { jobTitle, company, location };
 
-        // Store the jobDetails object in chrome.storage
         chrome.storage.sync.get({ jobs: [] }, (result: any) => {
             const updatedJobs = [...result.jobs, jobDetails];
             chrome.storage.sync.set({ jobs: updatedJobs }, () => {
                 console.log('Job details saved to chrome storage.');
-                // Optionally, reset form fields here
                 setJobTitle('');
                 setCompany('');
                 setLocation('');
@@ -85,9 +83,6 @@ function Job() {
                 required={true}
             />
             <div className='text-center'>
-                {/* <button type="submit" className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-          Add Job
-        </button> */}
                 <Button type="submit" variant="contained" className='w-full'>ADD JOB</Button>
             </div>
         </form>

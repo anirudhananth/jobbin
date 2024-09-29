@@ -6,7 +6,6 @@ import { useState, useEffect } from "react";
 import React from "react";
 import Main from "../../components/main";
 
-// const supabaseUrl = 'https://ykcecftnsyyclchogssh.supabase.co';
 const JOBBIN_SERVER_URL = "https://jobbin-server.vercel.app";
 
 
@@ -15,6 +14,7 @@ function Popup() {
 	const [isAllowed, setIsAllowed] = useState(false);
 	const [isLoading, setIsLoading] = useState(true);
 	const [user, setUser] = useState<User | null>(null);
+	const [invalidCredentials, setInvalidCredentials] = useState(false);
 	const allowedDomains: string[] = [
 		"indeed.com",
 		"linkedin.com",
@@ -102,7 +102,6 @@ function Popup() {
 					lastName
 				}
 			});
-			// Handle successful sign-in (e.g., update UI, store session)
 		} catch (error) {
 			console.error('Error during Supabase sign-in:', error);
 		}
@@ -110,6 +109,7 @@ function Popup() {
 
 	async function login(email: string, password: string) {
 		try {
+			setInvalidCredentials(false);
 			const response = await fetch(`${JOBBIN_SERVER_URL}/login`, {
 				method: 'POST',
 				headers: {
@@ -122,9 +122,14 @@ function Popup() {
 			});
 
 			if (!response.ok) {
-				console.log("Error logging in:", response);
-				const error = await response.json();
-				throw new error;
+				const errorResponse = await response.json();
+				console.log("Error logging in:", errorResponse);
+				if (errorResponse.error.code === "invalid_credentials") {
+					setInvalidCredentials(true);
+					return;
+				} else {
+					throw new Error(errorResponse.error.code || "Login failed");
+				}
 			}
 
 			const data = await response.json();
@@ -137,9 +142,8 @@ function Popup() {
 					lastName: data.lastName
 				}
 			});
-			// Handle successful sign-in (e.g., update UI, store session)
 		} catch (error) {
-			console.error('Error during Supabase sign-in:', error);
+			console.error("Error while signing in:", error);
 		}
 	}
 
@@ -190,7 +194,6 @@ function Popup() {
 				}
 			</style>
 			<div className="">
-				{/* <Job /> */}
 				{isLoading ? (
 					<div className="loader-container">
 						<div className="loader"></div>
@@ -201,6 +204,7 @@ function Popup() {
 							<Auth
 								signUp={(firstName, lastName, email, password) => signUp(firstName, lastName, email, password)}
 								login={(email, password) => login(email, password)}
+								invalidCredentials={invalidCredentials}
 							/>
 						) : (
 							<Main

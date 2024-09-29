@@ -14,12 +14,16 @@ interface JobApplicationRequest {
     data: JobApplicationData | null | { jobId: string, status: string };
 }
 
+interface DeleteJobsRequest {
+    action: 'deleteJobs';
+    data: { jobsIds: string[] };
+}
+
 interface JobParsingRequest {
     action: 'parseJobPosting';
     postingText: string;
 }
 
-// const supabaseUrl = 'https://ykcecftnsyyclchogssh.supabase.co';
 const JOBBIN_SERVER_URL = "https://jobbin-server.vercel.app";
 
 async function getOpenAIApiKey() {
@@ -128,6 +132,27 @@ async function updateJobStatus(jobId: string, status: string) {
         console.log("Job status updated successfully!");
     } catch (error) {
         console.error("Error updating job status: ", error);
+        throw error;
+    }
+}
+
+async function deleteJobs(jobIds: string[]) {
+    try {
+        const response = await fetch(`${JOBBIN_SERVER_URL}/delete_jobs`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ jobIds })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        console.log("Jobs deleted successfully!");
+    } catch (error) {
+        console.error("Error deleting jobs: ", error);
         throw error;
     }
 }
@@ -289,6 +314,19 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         };
 
         updateStatus();
+        return true;
+    } else if ((request as DeleteJobsRequest).action === 'deleteJobs') {
+        const deleteJobsHandler = async () => {
+            try {
+                await deleteJobs(request.data.jobIds);
+                sendResponse({ success: true });
+            } catch (error: any) {
+                console.error("Error deleting jobs: ", error);
+                sendResponse({ error: error.message });
+            }
+        };
+
+        deleteJobsHandler();
         return true;
     }
     return false;

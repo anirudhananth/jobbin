@@ -7,10 +7,6 @@ import ViewApplications from '../../components/view-applications';
 import Usage from "../../components/usage";
 import Loader from '../../components/loader';
 
-// window.addEventListener('load', () => {
-//     chrome.storage.local.set({ disabled: false });
-// })
-
 interface JobApplicationMessage {
     action: 'jobApplicationDetected' | 'jobDataCollected' | 'parseJobPosting' | 'closeModal' | 'enableButton';
     data: Partial<JobApplicationData> | null;
@@ -39,17 +35,14 @@ function Content() {
     let isProcessing = false;
     const processedForms = new WeakSet();
 
-    // Function to check if the current page is a job application page
     function isJobApplicationPage(): boolean {
         const url = window.location.href.toLowerCase();
         return url.includes('apply') || url.includes('job-application') || url.includes('careers') || url.includes('job');
     }
 
-    // Function to safely send a message to the background script
     function safeSendMessage(message: JobApplicationMessage): void {
         if (chrome.runtime && chrome.runtime.sendMessage) {
             chrome.runtime.sendMessage(message, (response) => {
-                // console.log("Response from background script:", response);
                 if (chrome.runtime.lastError) {
                     console.log("Failed to send message:", chrome.runtime.lastError.message);
                 } else {
@@ -62,21 +55,11 @@ function Content() {
     }
 
     function convertToEST(date: string): string {
-        const estOffset = -5; // EST is UTC-5
-
-        // Create a new Date object from the ISO string
+        const estOffset = -5;
         const utcDate = new Date(date);
-
-        // Get the UTC timestamp
         const utcTimestamp = utcDate.getTime();
-
-        // Calculate the EST timestamp
         const estTimestamp = utcTimestamp + (estOffset * 60 * 60 * 1000);
-
-        // Create a new Date object for EST
         const estDate = new Date(estTimestamp);
-
-        // Format the EST date as an ISO string
         return estDate.toISOString();
     }
 
@@ -173,7 +156,7 @@ function Content() {
     });
 
     async function addJob(jobData: Partial<JobApplicationData>) {
-        const linkedInModal: HTMLDivElement | null = document.querySelector('#artdeco-modal-outlet'); // Adjust selector as needed
+        const linkedInModal: HTMLDivElement | null = document.querySelector('#artdeco-modal-outlet');
         if (linkedInModal) {
             linkedInModal.style.display = 'none';
             linkedInModal.style.pointerEvents = 'none';
@@ -660,74 +643,6 @@ function Content() {
             }
         }
     }
-
-    // if (isJobApplicationPage()) {
-    //     if (jobDataExtracted) {
-    //         return
-    //     }
-    // }
-
-    // async function handlePotentialSubmission(event: Event): Promise<void> {
-    //     if (isProcessing) return;
-
-    //     const form = event.target as HTMLFormElement;
-    //     if (!(form instanceof HTMLFormElement)) return;
-    //     if (processedForms.has(form)) return;
-
-    //     if (isJobApplicationPage()) {
-    //         event.preventDefault();
-    //         isProcessing = true;
-
-    //         try {
-    //             // Create a Promise that resolves when the form submission is complete
-    //             const formSubmitPromise = new Promise<boolean>((resolve) => {
-    //                 const originalSubmit = form.submit;
-    //                 form.submit = function () {
-    //                     // Restore the original submit function
-    //                     form.submit = originalSubmit;
-    //                     // Attempt to submit the form
-    //                     try {
-    //                         originalSubmit.call(this);
-    //                         // If we reach here, assume the submission was successful
-    //                         resolve(true);
-    //                     } catch (error) {
-    //                         console.error("Form submission failed:", error);
-    //                         resolve(false);
-    //                     }
-    //                 };
-
-    //                 // Trigger the form submission
-    //                 form.requestSubmit();
-    //             });
-
-    //             // Wait for the form submission to complete
-    //             const wasSubmitted = await formSubmitPromise;
-
-    //             if (wasSubmitted) {
-    //                 const result = await chrome.storage.local.get(['openaiApiKey', 'anthropicApiKey']);
-    //                 if (!result.openaiApiKey && !result.anthropicApiKey) {
-    //                     addJob({
-    //                         title: '',
-    //                         company: '',
-    //                         location: '',
-    //                         position: '',
-    //                         url: window.location.href,
-    //                         timestamp: new Date().toISOString(),
-    //                     });
-    //                 } else {
-    //                     const jobData = await extractJobDataWithAI();
-    //                     console.log("Job data extracted:", jobData);
-    //                     addJob(jobData);
-    //                 }
-    //                 processedForms.add(form);
-    //             }
-    //         } catch (error) {
-    //             console.error("Error during form submission or job data extraction:", error);
-    //         } finally {
-    //             isProcessing = false;
-    //         }
-    //     }
-    // }
 
     const observer = new MutationObserver(async (mutations: MutationRecord[]) => {
         if (isListenerSetup) {

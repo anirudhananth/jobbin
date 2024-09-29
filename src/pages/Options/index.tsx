@@ -9,9 +9,7 @@ function init() {
     document.body.appendChild(root);
     const rootDiv = ReactDom.createRoot(root);
     rootDiv.render(
-        <React.StrictMode>
-            <Options />
-        </React.StrictMode>
+        <Options />
     );
 }
 

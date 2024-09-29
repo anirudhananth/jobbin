@@ -32,21 +32,11 @@ export default function Main({ signOut }: { signOut: () => void }) {
 
 
     function convertToEST(date: string): string {
-        const estOffset = -5; // EST is UTC-5
-
-        // Create a new Date object from the ISO string
+        const estOffset = -5;
         const utcDate = new Date(date);
-
-        // Get the UTC timestamp
         const utcTimestamp = utcDate.getTime();
-
-        // Calculate the EST timestamp
         const estTimestamp = utcTimestamp + (estOffset * 60 * 60 * 1000);
-
-        // Create a new Date object for EST
         const estDate = new Date(estTimestamp);
-
-        // Format the EST date as an ISO string
         return estDate.toISOString();
     }
 
@@ -128,7 +118,6 @@ export default function Main({ signOut }: { signOut: () => void }) {
                 "https://*.supabase.co/*"
             ]
         }, function (tabs) {
-            //   chrome.tabs.sendMessage(tabs[0].id!, { action: "refreshModals" });
             tabs.forEach(tab => {
                 if (tab.id) {
                     chrome.tabs.sendMessage(tab.id, { action: "refreshModals" }, (response) => {

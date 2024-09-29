@@ -27,7 +27,6 @@
     "*://*.wd5.myworkdayjobs.com/*",
     "https://jobbin-server.vercel.app/"
   ],
-  "options_page": "js/options.html",
   "background": {
     "service_worker": "js/background.js",
     "type": "module"
