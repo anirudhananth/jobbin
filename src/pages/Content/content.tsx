@@ -609,7 +609,12 @@ function Content() {
                 if (isJobApplicationPage()) {
                     isProcessing = true;
 
-                    event.preventDefault();
+                    if (form) {
+                        form.addEventListener('submit', (event) => {
+                            onSubmit(form);
+                        }, true);
+                        return;
+                    }
 
                     try {
                         const result = await chrome.storage.local.get(['openaiApiKey', 'anthropicApiKey']);
@@ -644,6 +649,39 @@ function Content() {
                 }
             }
         }
+    }
+
+    async function onSubmit(form: HTMLFormElement) {
+        try {
+            const result = await chrome.storage.local.get(['openaiApiKey', 'anthropicApiKey']);
+            if (!result.openaiApiKey && !result.anthropicApiKey) {
+                setTimeout(() => {
+                    addJob({
+                        title: '',
+                        company: '',
+                        location: '',
+                        position: '',
+                        status: 'Applied',
+                        url: window.location.href,
+                        timestamp: convertToEST(new Date().toISOString()),
+                    });
+                }, 1000);
+            } else {
+                const jobData = await extractJobDataWithAI();
+                console.log("Job data extracted:", jobData);
+                showLoader();
+                setTimeout(() => {
+                    document.body.removeChild(loaderRoot!);
+                    addJob(jobData);
+                }, 1000);
+            }
+        } catch (error) {
+            console.log("Error extracting job data:", error);
+        }
+
+        if (form) processedForms.add(form);
+
+        isProcessing = false;
     }
 
     const observer = new MutationObserver(async (mutations: MutationRecord[]) => {

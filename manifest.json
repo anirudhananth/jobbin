@@ -7,10 +7,7 @@
     "default_popup": "js/popup.html",
     "default_title": "Jobbin"
   },
-  "permissions": [
-    "storage",
-    "tabs"
-  ],
+  "permissions": ["storage", "tabs"],
   "host_permissions": [
     "*://*.indeed.com/*",
     "*://*.linkedin.com/*",
@@ -42,15 +39,12 @@
         "*://*.glassdoor.com/*",
         "*://*.monster.com/*",
         "*://*.simplyhired.com/*",
-        "*://*.ziprecruiter.com/*",
         "*://*.angel.co/*",
         "*://*.wellfound.com/jobs*",
         "*://*.wd5.myworkdayjobs.com/*",
         "https://jobbin-server.vercel.app/"
       ],
-      "js": [
-        "js/contentScript.js"
-      ]
+      "js": ["js/contentScript.js"]
     }
   ],
   "web_accessible_resources": [
